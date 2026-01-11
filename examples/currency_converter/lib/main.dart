@@ -113,15 +113,15 @@ class _CurrencyConverterContent extends StatelessWidget {
                   ),
                 ],
               ),
-              GestureDetector(
-                onTap: () {
+              IconButton(
+                onPressed: () {
                   final temp = fromCurrencyRef.of(context).value;
                   fromCurrencyRef.of(context).value = toCurrencyRef
                       .of(context)
                       .value;
                   toCurrencyRef.of(context).value = temp;
                 },
-                child: const Text('↔', style: TextStyle(fontSize: 24)),
+                icon: Icon(Icons.swap_horiz),
               ),
               Row(
                 spacing: 10,
@@ -191,7 +191,7 @@ class _CurrencySelector extends StatelessWidget {
             (currency) => PopupMenuItem(value: currency, child: Text(currency)),
           )
           .toList(),
-      child: Text(current, style: const TextStyle(fontSize: 16)),
+      child: Text('$current ▽', style: const TextStyle(fontSize: 16)),
     );
   }
 }
