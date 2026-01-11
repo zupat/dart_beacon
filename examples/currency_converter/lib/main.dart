@@ -46,7 +46,6 @@ class CurrencyConverterView extends StatelessWidget {
 }
 
 void main() {
-  BeaconObserver.useLogging();
   runApp(
     LiteRefScope(
       child: MaterialApp(
