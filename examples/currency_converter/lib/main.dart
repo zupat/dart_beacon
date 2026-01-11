@@ -119,6 +119,7 @@ class CurrencyConverterView extends StatelessWidget {
           Expanded(
             child: GridView.count(
               crossAxisCount: 3,
+              childAspectRatio: 1.7,
               children: List.generate(12, (index) {
                 if (index < 9) {
                   return _NumPadButton('${index + 1}');
