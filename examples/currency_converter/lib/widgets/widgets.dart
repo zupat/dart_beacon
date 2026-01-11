@@ -7,3 +7,4 @@ part 'common_conversions.dart';
 part 'currency_display.dart';
 part 'currency_selector.dart';
 part 'numpad.dart';
+part 'settings_panel.dart';

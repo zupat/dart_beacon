@@ -17,6 +17,7 @@ dependencies:
   state_beacon: 
     path: ../../packages/state_beacon
   http: ^1.6.0
+  timeago: ^3.7.1
 
 dependency_overrides:
   state_beacon_core: 

@@ -9,9 +9,13 @@ class _CurrencySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final enabledCurrencies = controllerRef.select(
+      context,
+      (c) => c.enabledCurrencies,
+    );
     return PopupMenuButton<String>(
       onSelected: (value) => currencyBeacon.value = value,
-      itemBuilder: (BuildContext context) => ['USD', 'EUR', 'GBP', 'JPY']
+      itemBuilder: (BuildContext context) => enabledCurrencies
           .map(
             (currency) => PopupMenuItem(value: currency, child: Text(currency)),
           )

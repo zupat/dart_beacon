@@ -3,10 +3,21 @@ import 'dart:convert';
 import 'package:currency_converter/utils.dart';
 import 'package:state_beacon/state_beacon.dart';
 import 'package:http/http.dart' as http;
+import 'package:timeago/timeago.dart' as timeago;
 
 const apiURL = 'https://latest.currency-api.pages.dev/v1/currencies/usd.json';
 
 class CurrencyController with BeaconController {
+  CurrencyController() {
+    allRates.subscribe((newVal) {
+      if (newVal.isData) {
+        lastUpdate.value = timeago.format(DateTime.now());
+      }
+    });
+  }
+
+  // the app won't load if no rates are fetched
+  late final lastUpdate = B.lazyWritable<String>();
   late final amount = B.writable('');
   late final amountFormatted = B.derived(() {
     return formatCurrency(amount.value);
@@ -20,7 +31,7 @@ class CurrencyController with BeaconController {
   });
   late final fromCurrency = B.writable('USD');
   late final toCurrency = B.writable('EUR');
-  late final currencies = B.hashSet({'USD', 'EUR', 'GBP', 'JPY', 'CNY'});
+  late final enabledCurrencies = B.hashSet({'USD', 'EUR', 'GBP', 'JPY', 'CNY'});
 
   late final allRates = B.future(() async {
     final resp = await http.get(Uri.parse(apiURL));
@@ -40,7 +51,7 @@ class CurrencyController with BeaconController {
 
   late final filteredRates = B.derived(() {
     final rates = allRates.value.lastData ?? {};
-    final enabled = currencies.value;
+    final enabled = enabledCurrencies.value;
     final result = <String, double>{};
     for (final currency in enabled) {
       if (rates.containsKey(currency)) {
@@ -102,5 +113,9 @@ class CurrencyController with BeaconController {
 
   void clearAmount() {
     amount.value = '';
+  }
+
+  void enableCurrency(String currency) {
+    enabledCurrencies.add(currency);
   }
 }

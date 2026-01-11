@@ -10,7 +10,20 @@ class CurrencyConverterView extends StatelessWidget {
   Widget build(BuildContext context) {
     final rates = controllerRef.select(context, (c) => c.allRates);
     return Scaffold(
-      appBar: AppBar(title: const Text('Currency Converter')),
+      appBar: AppBar(
+        title: const Text('Currency Converter'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (context) => const SettingsPanel(),
+              );
+            },
+          ),
+        ],
+      ),
       body: Center(
         child: AspectRatio(
           aspectRatio: 9 / 16,
@@ -34,17 +47,19 @@ class CurrencyConverterView extends StatelessWidget {
 
 void main() {
   runApp(
-    MaterialApp(
-      title: 'Currency Converter',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // Define the default brightness and colors.
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
+    LiteRefScope(
+      child: MaterialApp(
+        title: 'Currency Converter',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          // Define the default brightness and colors.
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.blue,
+            brightness: Brightness.dark,
+          ),
         ),
+        home: const CurrencyConverterView(),
       ),
-      home: const LiteRefScope(child: CurrencyConverterView()),
     ),
   );
 }
