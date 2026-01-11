@@ -93,11 +93,22 @@ class _CurrencyConverterContent extends StatelessWidget {
                 spacing: 10,
                 children: [
                   _CurrencySelector(fromCurrencyRef, fromCurrency, 'from'),
-                  Text(
-                    amount.isEmpty ? '0' : amount,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: Colors.blue, width: 2),
+                      ),
+                    ),
+                    child: Text(
+                      amount.isEmpty ? '0' : amount,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -115,13 +126,24 @@ class _CurrencyConverterContent extends StatelessWidget {
               Row(
                 spacing: 10,
                 children: [
-                  Text(
-                    ((amount.isEmpty ? 0.0 : double.parse(amount)) *
-                            (rates[toCurrency]! / rates[fromCurrency]!))
-                        .toStringAsFixed(2),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        right: BorderSide(color: Colors.blue, width: 2),
+                      ),
+                    ),
+                    child: Text(
+                      ((amount.isEmpty ? 0.0 : double.parse(amount)) *
+                              (rates[toCurrency]! / rates[fromCurrency]!))
+                          .toStringAsFixed(2),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   _CurrencySelector(toCurrencyRef, toCurrency, 'to'),
@@ -169,14 +191,7 @@ class _CurrencySelector extends StatelessWidget {
             (currency) => PopupMenuItem(value: currency, child: Text(currency)),
           )
           .toList(),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.blue),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(current, style: const TextStyle(fontSize: 16)),
-      ),
+      child: Text(current, style: const TextStyle(fontSize: 16)),
     );
   }
 }
