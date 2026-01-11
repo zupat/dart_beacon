@@ -50,7 +50,7 @@ class CurrencyController with BeaconController {
       if (DateTime.now().difference(lastUpdate.value).inHours > 12) {
         refreshRates();
       }
-    });
+    }, startNow: false);
   }
 
   // the app won't load if no rates are fetched
