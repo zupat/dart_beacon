@@ -13,6 +13,7 @@ class CurrencyDisplay extends StatelessWidget {
 
     return Container(
       color: Theme.of(context).colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

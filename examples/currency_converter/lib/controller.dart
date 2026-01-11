@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:currency_converter/const.dart';
-import 'package:currency_converter/utils.dart';
+import 'package:fast_currency_converter/const.dart';
+import 'package:fast_currency_converter/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:state_beacon/state_beacon.dart';
 import 'package:http/http.dart' as http;
@@ -65,7 +65,7 @@ class CurrencyController with BeaconController {
     final fromRate = enabledRates.value[fromCurrency.value] ?? 1.0;
     final toRate = enabledRates.value[toCurrency.value] ?? 1.0;
     final converted = amountValue / fromRate * toRate;
-    return converted.toStringAsFixed(2);
+    return formatCurrency(converted.toStringAsFixed(2));
   });
 
   late final fromCurrency = B.writable('USD');
@@ -166,6 +166,14 @@ class CurrencyController with BeaconController {
 
   void addDigit(String digit) {
     amount.value += digit;
+  }
+
+  void removeLastDigit() {
+    if (amount.value.length > 1) {
+      amount.value = amount.value.substring(0, amount.value.length - 1);
+    } else {
+      amount.value = '';
+    }
   }
 
   void clearAmount() {

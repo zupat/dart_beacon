@@ -1,4 +1,4 @@
-import 'package:currency_converter/controller.dart';
+import 'package:fast_currency_converter/controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:state_beacon/state_beacon.dart';
 

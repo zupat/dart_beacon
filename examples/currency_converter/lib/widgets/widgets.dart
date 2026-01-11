@@ -1,4 +1,4 @@
-import 'package:currency_converter/deps.dart';
+import 'package:fast_currency_converter/deps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:state_beacon/state_beacon.dart';

@@ -18,6 +18,8 @@ class Numpad extends StatelessWidget {
           if (keyLabel != null) {
             if (keyLabel == 'clear') {
               controller.clearAmount();
+            } else if (keyLabel == 'backspace') {
+              controller.removeLastDigit();
             } else {
               controller.addDigit(keyLabel);
             }
@@ -81,9 +83,11 @@ class Numpad extends StatelessWidget {
       return '.';
     }
 
-    // Handle clear/backspace
-    if (key == LogicalKeyboardKey.backspace ||
-        key == LogicalKeyboardKey.delete) {
+    if (key == LogicalKeyboardKey.backspace) {
+      return 'backspace';
+    }
+
+    if (key == LogicalKeyboardKey.delete) {
       return 'clear';
     }
 
@@ -134,7 +138,8 @@ class _ClearButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: controllerRef.read(context).clearAmount,
+      onTap: controllerRef.read(context).removeLastDigit,
+      onLongPress: controllerRef.read(context).clearAmount,
       child: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(

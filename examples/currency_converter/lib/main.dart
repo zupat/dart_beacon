@@ -1,5 +1,5 @@
-import 'package:currency_converter/deps.dart';
-import 'package:currency_converter/widgets/widgets.dart';
+import 'package:fast_currency_converter/deps.dart';
+import 'package:fast_currency_converter/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:state_beacon/state_beacon.dart';
 
@@ -10,7 +10,7 @@ class CurrencyConverterView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Currency Converter'),
+        title: const Text('Fast Currency Converter'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -47,7 +47,7 @@ Future<void> main() async {
   runApp(
     LiteRefScope(
       child: MaterialApp(
-        title: 'Currency Converter',
+        title: 'Fast Currency Converter',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           // Define the default brightness and colors.
