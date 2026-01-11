@@ -10,6 +10,26 @@ class CurrencyConverterView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Currency Converter')),
+      body: Center(
+        child: AspectRatio(
+          aspectRatio: 9 / 16,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: const _CurrencyConverterContent(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CurrencyConverterContent extends StatelessWidget {
+  const _CurrencyConverterContent();
+
+  @override
+  Widget build(BuildContext context) {
     final amount = amountRef.watch(context);
     final fromCurrency = fromCurrencyRef.watch(context);
     final toCurrency = toCurrencyRef.watch(context);
@@ -18,123 +38,117 @@ class CurrencyConverterView extends StatelessWidget {
 
     final quickAmounts = [5, 10, 15, 20, 50, 100];
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Currency Converter')),
-      body: Column(
-        children: [
-          // Quick conversion rates list
-          Expanded(
-            child: Container(
-              color: Colors.grey[100],
-              padding: const EdgeInsets.all(16),
-              child: ListView.builder(
-                itemCount: quickAmounts.length,
-                itemBuilder: (context, index) {
-                  final amt = quickAmounts[index];
-                  final converted =
-                      ((amt * (rates[toCurrency]! / rates[fromCurrency]!))
-                          .toStringAsFixed(2));
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          '$amt',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+    return Column(
+      children: [
+        // Quick conversion rates list
+        Expanded(
+          child: Container(
+            color: Colors.grey[100],
+            padding: const EdgeInsets.all(16),
+            child: ListView.builder(
+              itemCount: quickAmounts.length,
+              itemBuilder: (context, index) {
+                final amt = quickAmounts[index];
+                final converted =
+                    ((amt * (rates[toCurrency]! / rates[fromCurrency]!))
+                        .toStringAsFixed(2));
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        '$amt',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 20),
-                        Text(
-                          fromCurrency,
-                          style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(width: 20),
+                      Text(fromCurrency, style: const TextStyle(fontSize: 14)),
+                      const Spacer(),
+                      Text(
+                        converted,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const Spacer(),
-                        Text(
-                          converted,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        Text(toCurrency, style: const TextStyle(fontSize: 14)),
-                      ],
+                      ),
+                      const SizedBox(width: 20),
+                      Text(toCurrency, style: const TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        // Currency switcher
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    amount.isEmpty ? '0' : amount,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-                },
+                  ),
+                  _CurrencySelector(fromCurrencyRef, fromCurrency, 'from'),
+                ],
               ),
-            ),
-          ),
-          // Currency switcher
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      amount.isEmpty ? '0' : amount,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+              GestureDetector(
+                onTap: () {
+                  final temp = fromCurrencyRef.of(context).value;
+                  fromCurrencyRef.of(context).value = toCurrencyRef
+                      .of(context)
+                      .value;
+                  toCurrencyRef.of(context).value = temp;
+                },
+                child: const Text('↔', style: TextStyle(fontSize: 24)),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    ((amount.isEmpty ? 0.0 : double.parse(amount)) *
+                            (rates[toCurrency]! / rates[fromCurrency]!))
+                        .toStringAsFixed(2),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    _CurrencySelector(fromCurrencyRef, fromCurrency, 'from'),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: () {
-                    final temp = fromCurrencyRef.of(context).value;
-                    fromCurrencyRef.of(context).value = toCurrencyRef
-                        .of(context)
-                        .value;
-                    toCurrencyRef.of(context).value = temp;
-                  },
-                  child: const Text('↔', style: TextStyle(fontSize: 24)),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      ((amount.isEmpty ? 0.0 : double.parse(amount)) *
-                              (rates[toCurrency]! / rates[fromCurrency]!))
-                          .toStringAsFixed(2),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    _CurrencySelector(toCurrencyRef, toCurrency, 'to'),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                  _CurrencySelector(toCurrencyRef, toCurrency, 'to'),
+                ],
+              ),
+            ],
           ),
-          // Numpad
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 3,
-              childAspectRatio: 1.7,
-              children: List.generate(12, (index) {
-                if (index < 9) {
-                  return _NumPadButton('${index + 1}');
-                } else if (index == 9) {
-                  return _NumPadButton('0');
-                } else if (index == 10) {
-                  return _NumPadButton('.');
-                } else {
-                  return _ClearButton();
-                }
-              }),
-            ),
+        ),
+        // Numpad
+        Expanded(
+          child: GridView.count(
+            crossAxisCount: 3,
+            childAspectRatio: 1.7,
+            children: List.generate(12, (index) {
+              if (index < 9) {
+                return _NumPadButton('${index + 1}');
+              } else if (index == 9) {
+                return _NumPadButton('0');
+              } else if (index == 10) {
+                return _NumPadButton('.');
+              } else {
+                return _ClearButton();
+              }
+            }),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
