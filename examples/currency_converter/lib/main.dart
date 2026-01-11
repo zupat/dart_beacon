@@ -56,8 +56,19 @@ class _CurrencyConverterContent extends StatelessWidget {
 
     final rates = {'USD': 1.0, 'EUR': 0.92, 'GBP': 0.79, 'JPY': 149.50};
 
-    final quickAmounts = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
-    final largeAmounts = [55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 250];
+    final quickAmounts = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+    final largeAmounts = [
+      1000,
+      2000,
+      5000,
+      7000,
+      8000,
+      9000,
+      10000,
+      13000,
+      15000,
+      17000,
+    ];
 
     return Column(
       children: [
