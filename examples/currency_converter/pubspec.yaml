@@ -16,6 +16,8 @@ dependencies:
 
   state_beacon: 
     path: ../../packages/state_beacon
+  google_fonts: ^6.2.1
+  http: ^1.6.0
 
 dependency_overrides:
   state_beacon_core: 
