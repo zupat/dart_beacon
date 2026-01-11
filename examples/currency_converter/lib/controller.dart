@@ -21,13 +21,15 @@ class CurrencyController with BeaconController {
   late final amountFormatted = B.derived(() {
     return formatCurrency(amount.value);
   });
+
   late final convertedAmount = B.derived(() {
     final amountValue = double.tryParse(amount.value) ?? 0.0;
-    final fromRate = filteredRates.value[fromCurrency.value] ?? 1.0;
-    final toRate = filteredRates.value[toCurrency.value] ?? 1.0;
+    final fromRate = enabledRates.value[fromCurrency.value] ?? 1.0;
+    final toRate = enabledRates.value[toCurrency.value] ?? 1.0;
     final converted = amountValue / fromRate * toRate;
     return converted.toStringAsFixed(2);
   });
+
   late final fromCurrency = B.writable('USD');
   late final toCurrency = B.writable('EUR');
   late final enabledCurrencies = B.hashSet({'USD', 'EUR', 'GBP', 'JPY', 'CNY'});
@@ -48,7 +50,7 @@ class CurrencyController with BeaconController {
     }
   });
 
-  late final filteredRates = B.derived(() {
+  late final enabledRates = B.derived(() {
     final rates = allRates.value.lastData ?? {};
     final enabled = enabledCurrencies.value;
     final result = <String, double>{};
@@ -60,8 +62,26 @@ class CurrencyController with BeaconController {
     return result;
   });
 
+  late final query = B.textEditing();
+
+  late final ratesByQuery = B.derived(() {
+    final rates = allRates.value.lastData ?? {};
+    final q = query.value.text.trim().toUpperCase();
+    if (q.isEmpty) {
+      return rates;
+    } else {
+      final result = <String, double>{};
+      for (final entry in rates.entries) {
+        if (entry.key.contains(q)) {
+          result[entry.key] = entry.value;
+        }
+      }
+      return result;
+    }
+  });
+
   late final commonAmounts = B.derived(() {
-    final rates = filteredRates.value;
+    final rates = enabledRates.value;
     final fromRate = rates[fromCurrency.value] ?? 1.0;
     final toRate = rates[toCurrency.value] ?? 1.0;
     final smallAmounts = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];

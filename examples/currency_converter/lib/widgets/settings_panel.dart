@@ -6,9 +6,9 @@ class SettingsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = controllerRef.of(context);
-    final (allRates, enabledCurrencies, lastUpdate) = controller.select3(
+    final (ratesByQuery, enabledCurrencies, lastUpdate) = controller.select3(
       context,
-      (c) => (c.allRates, c.enabledCurrencies, c.lastUpdate),
+      (c) => (c.ratesByQuery, c.enabledCurrencies, c.lastUpdate),
     );
 
     return Scaffold(
@@ -32,40 +32,45 @@ class SettingsPanel extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
+            TextField(
+              controller: controller.query.controller,
+              decoration: const InputDecoration(
+                labelText: 'Search Currency',
+                border: OutlineInputBorder(),
+              ),
+            ),
             Expanded(
-              child: allRates.lastData != null
-                  ? ListView.builder(
-                      itemCount: allRates.lastData!.keys.length,
-                      itemBuilder: (context, index) {
-                        final allCurrencies = allRates.lastData!.keys.toList();
-                        final currency = allCurrencies[index];
-                        final isEnabled = enabledCurrencies.contains(currency);
-                        final rate = allRates.lastData![currency] ?? 0.0;
+              child: ListView.builder(
+                itemCount: ratesByQuery.keys.length,
+                itemBuilder: (context, index) {
+                  final allCurrencies = ratesByQuery.keys.toList();
+                  final currency = allCurrencies[index];
+                  final isEnabled = enabledCurrencies.contains(currency);
+                  final rate = ratesByQuery[currency] ?? 0.0;
 
-                        return ListTile(
-                          title: Text(
-                            currency,
-                            style: TextStyle(
-                              fontWeight: isEnabled
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                          subtitle: Text('Rate: ${rate.toStringAsFixed(4)}'),
-                          trailing: Checkbox(
-                            value: isEnabled,
-                            onChanged: (bool? value) {
-                              if (value == true) {
-                                controller.enableCurrency(currency);
-                              } else {
-                                controller.enabledCurrencies.remove(currency);
-                              }
-                            },
-                          ),
-                        );
+                  return ListTile(
+                    title: Text(
+                      currency,
+                      style: TextStyle(
+                        fontWeight: isEnabled
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                    subtitle: Text('Rate: ${rate.toStringAsFixed(4)}'),
+                    trailing: Checkbox(
+                      value: isEnabled,
+                      onChanged: (bool? value) {
+                        if (value == true) {
+                          controller.enableCurrency(currency);
+                        } else {
+                          controller.enabledCurrencies.remove(currency);
+                        }
                       },
-                    )
-                  : const Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),
