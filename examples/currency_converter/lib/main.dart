@@ -2,7 +2,6 @@ import 'package:currency_converter/deps.dart';
 import 'package:currency_converter/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:state_beacon/state_beacon.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class CurrencyConverterView extends StatelessWidget {
   const CurrencyConverterView({super.key});
@@ -37,32 +36,12 @@ void main() {
   runApp(
     MaterialApp(
       title: 'Currency Converter',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         // Define the default brightness and colors.
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: Colors.blue,
           brightness: Brightness.dark,
-        ),
-
-        // Define the default `TextTheme`. Use this to specify the default
-        // text styling for headlines, titles, bodies of text, and more.
-        textTheme: TextTheme(
-          displayLarge: const TextStyle(
-            fontSize: 72,
-            fontWeight: FontWeight.bold,
-          ),
-          titleLarge: GoogleFonts.inter(
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-          ),
-          bodyMedium: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.normal,
-          ),
-          displaySmall: GoogleFonts.inter(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
         ),
       ),
       home: const LiteRefScope(child: CurrencyConverterView()),
