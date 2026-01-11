@@ -9,8 +9,7 @@ class CommonConversions extends StatelessWidget {
     final fromCurrency = controller.fromCurrency.watch(context);
     final toCurrency = controller.toCurrency.watch(context);
 
-    final smallAmounts = controller.commonAmounts.watch(context).small;
-    final largeAmounts = controller.commonAmounts.watch(context).large;
+    final (:small, :large) = controller.commonAmounts.watch(context);
 
     return Expanded(
       child: Container(
@@ -74,7 +73,7 @@ class CommonConversions extends StatelessWidget {
             // Conversion rates
             Expanded(
               child: ListView.separated(
-                itemCount: smallAmounts.length,
+                itemCount: small.length,
                 separatorBuilder: (context, index) {
                   return Divider(
                     height: 1,
@@ -83,8 +82,8 @@ class CommonConversions extends StatelessWidget {
                   );
                 },
                 itemBuilder: (context, index) {
-                  final amt = smallAmounts[index];
-                  final largeAmt = largeAmounts[index % largeAmounts.length];
+                  final amt = small[index];
+                  final largeAmt = large[index % large.length];
                   return Column(
                     children: [
                       Padding(
