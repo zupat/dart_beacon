@@ -89,9 +89,10 @@ class _CurrencyConverterContent extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                spacing: 10,
                 children: [
+                  _CurrencySelector(fromCurrencyRef, fromCurrency, 'from'),
                   Text(
                     amount.isEmpty ? '0' : amount,
                     style: const TextStyle(
@@ -99,7 +100,6 @@ class _CurrencyConverterContent extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  _CurrencySelector(fromCurrencyRef, fromCurrency, 'from'),
                 ],
               ),
               GestureDetector(
@@ -112,8 +112,8 @@ class _CurrencyConverterContent extends StatelessWidget {
                 },
                 child: const Text('↔', style: TextStyle(fontSize: 24)),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
+                spacing: 10,
                 children: [
                   Text(
                     ((amount.isEmpty ? 0.0 : double.parse(amount)) *
