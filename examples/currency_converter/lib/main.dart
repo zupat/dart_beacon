@@ -123,8 +123,15 @@ class _CurrencyConverterContent extends StatelessWidget {
                 const SizedBox(height: 16),
                 // Conversion rates
                 Expanded(
-                  child: ListView.builder(
+                  child: ListView.separated(
                     itemCount: quickAmounts.length,
+                    separatorBuilder: (context, index) {
+                      return Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.grey[300],
+                      );
+                    },
                     itemBuilder: (context, index) {
                       final amt = quickAmounts[index];
                       final converted =
@@ -136,55 +143,59 @@ class _CurrencyConverterContent extends StatelessWidget {
                           ((largeAmt *
                                   (rates[toCurrency]! / rates[fromCurrency]!))
                               .toStringAsFixed(2));
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3.5),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                formatCurrency('$amt'),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3.5),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    formatCurrency('$amt'),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                formatCurrency(converted),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    formatCurrency(converted),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                formatCurrency('$largeAmt'),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    formatCurrency('$largeAmt'),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                formatCurrency(largeConverted),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    formatCurrency(largeConverted),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       );
                     },
                   ),
