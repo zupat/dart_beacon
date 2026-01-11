@@ -44,6 +44,13 @@ class CurrencyController with BeaconController {
         lastUpdate.value = DateTime.now();
       }
     });
+
+    convertedAmount.subscribe((_) {
+      // refresh rates if last update was more than 12 hours ago
+      if (DateTime.now().difference(lastUpdate.value).inHours > 12) {
+        refreshRates();
+      }
+    });
   }
 
   // the app won't load if no rates are fetched
