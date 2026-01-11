@@ -45,40 +45,78 @@ class _CurrencyConverterContent extends StatelessWidget {
           child: Container(
             color: Colors.grey[100],
             padding: const EdgeInsets.all(16),
-            child: ListView.builder(
-              itemCount: quickAmounts.length,
-              itemBuilder: (context, index) {
-                final amt = quickAmounts[index];
-                final converted =
-                    ((amt * (rates[toCurrency]! / rates[fromCurrency]!))
-                        .toStringAsFixed(2));
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Text(
-                        '$amt',
+            child: Column(
+              children: [
+                // Currency headers
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        fromCurrency,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Colors.blue,
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(width: 20),
-                      Text(fromCurrency, style: const TextStyle(fontSize: 14)),
-                      const Spacer(),
-                      Text(
-                        converted,
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Text(
+                        toCurrency,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Colors.blue,
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(width: 20),
-                      Text(toCurrency, style: const TextStyle(fontSize: 14)),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Conversion rates
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: quickAmounts.length,
+                    itemBuilder: (context, index) {
+                      final amt = quickAmounts[index];
+                      final converted =
+                          ((amt * (rates[toCurrency]! / rates[fromCurrency]!))
+                              .toStringAsFixed(2));
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '$amt',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: Text(
+                                converted,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
         ),
