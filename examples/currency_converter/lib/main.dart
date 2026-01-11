@@ -8,7 +8,6 @@ class CurrencyConverterView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rates = controllerRef.select(context, (c) => c.allRates);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Currency Converter'),
@@ -29,15 +28,13 @@ class CurrencyConverterView extends StatelessWidget {
           aspectRatio: 9 / 16,
           child: Container(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: rates.lastData != null
-                ? Column(
-                    children: [
-                      CommonConversions(),
-                      CurrencyDisplay(),
-                      Numpad(),
-                    ],
-                  )
-                : const NoRatesAvailable(),
+            child: switch (startUpBeacon.watch(context)) {
+              AsyncData() => Column(
+                children: [CommonConversions(), CurrencyDisplay(), Numpad()],
+              ),
+              AsyncError e => StartupError(e.error.toString()),
+              _ => const Center(child: CircularProgressIndicator()),
+            },
           ),
         ),
       ),
@@ -45,7 +42,7 @@ class CurrencyConverterView extends StatelessWidget {
   }
 }
 
-void main() {
+Future<void> main() async {
   // BeaconObserver.useLogging();
   runApp(
     LiteRefScope(

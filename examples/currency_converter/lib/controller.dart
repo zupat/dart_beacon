@@ -1,13 +1,44 @@
 import 'dart:convert';
 
+import 'package:currency_converter/const.dart';
 import 'package:currency_converter/utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:state_beacon/state_beacon.dart';
 import 'package:http/http.dart' as http;
 
-const apiURL = 'https://latest.currency-api.pages.dev/v1/currencies/usd.json';
-
 class CurrencyController with BeaconController {
-  CurrencyController() {
+  final SharedPreferences sharedPref;
+
+  CurrencyController(this.sharedPref) {
+    // Load saved preferences
+    final savedEnabled = sharedPref.getStringList(prefEnabledCurrenciesKey);
+    if (savedEnabled != null) {
+      enabledCurrencies.value = savedEnabled.toSet();
+    }
+
+    final savedFrom = sharedPref.getString(prefFromCurrencyKey);
+    if (savedFrom != null) {
+      fromCurrency.value = savedFrom;
+    }
+
+    final savedTo = sharedPref.getString(prefToCurrencyKey);
+    if (savedTo != null) {
+      toCurrency.value = savedTo;
+    }
+    // Save preferences on change
+    enabledCurrencies.subscribe((newVal) {
+      sharedPref.setStringList(prefEnabledCurrenciesKey, newVal.toList());
+    }, startNow: false);
+
+    fromCurrency.subscribe((newVal) {
+      sharedPref.setString(prefFromCurrencyKey, newVal);
+    }, startNow: false);
+
+    toCurrency.subscribe((newVal) {
+      sharedPref.setString(prefToCurrencyKey, newVal);
+    }, startNow: false);
+
+    // Update last update time when rates are fetched
     allRates.subscribe((newVal) {
       if (newVal.isData) {
         lastUpdate.value = DateTime.now();
