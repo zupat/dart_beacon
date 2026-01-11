@@ -6,9 +6,9 @@ class SettingsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = controllerRef.of(context);
-    final (allRates, enabledCurrencies) = controller.select2(
+    final (allRates, enabledCurrencies, lastUpdate) = controller.select3(
       context,
-      (c) => (c.allRates, c.enabledCurrencies),
+      (c) => (c.allRates, c.enabledCurrencies, c.lastUpdate),
     );
 
     return Scaffold(
@@ -18,6 +18,15 @@ class SettingsPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                Text('Last Updated: ${timeago.format(lastUpdate)}'),
+                IconButton(
+                  onPressed: controller.refreshRates,
+                  icon: Icon(Icons.refresh),
+                ),
+              ],
+            ),
             const Text(
               'Available Currencies',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

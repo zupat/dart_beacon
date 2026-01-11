@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:currency_converter/utils.dart';
 import 'package:state_beacon/state_beacon.dart';
 import 'package:http/http.dart' as http;
-import 'package:timeago/timeago.dart' as timeago;
 
 const apiURL = 'https://latest.currency-api.pages.dev/v1/currencies/usd.json';
 
@@ -11,13 +10,13 @@ class CurrencyController with BeaconController {
   CurrencyController() {
     allRates.subscribe((newVal) {
       if (newVal.isData) {
-        lastUpdate.value = timeago.format(DateTime.now());
+        lastUpdate.value = DateTime.now();
       }
     });
   }
 
   // the app won't load if no rates are fetched
-  late final lastUpdate = B.lazyWritable<String>();
+  late final lastUpdate = B.lazyWritable<DateTime>();
   late final amount = B.writable('');
   late final amountFormatted = B.derived(() {
     return formatCurrency(amount.value);
