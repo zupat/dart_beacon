@@ -1,6 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:state_beacon/state_beacon.dart';
 
+String formatCurrency(String value) {
+  if (value.isEmpty) return '0';
+
+  // Handle decimal numbers
+  final parts = value.split('.');
+  final integerPart = parts[0];
+  final decimalPart = parts.length > 1 ? '.${parts[1]}' : '';
+
+  // Add commas to integer part
+  String formattedInteger = '';
+  for (int i = 0; i < integerPart.length; i++) {
+    if (i > 0 && (integerPart.length - i) % 3 == 0) {
+      formattedInteger += ',';
+    }
+    formattedInteger += integerPart[i];
+  }
+
+  return formattedInteger + decimalPart;
+}
+
 final amountRef = Ref.scoped((ctx) => Beacon.writable(''));
 final fromCurrencyRef = Ref.scoped((ctx) => Beacon.writable('USD'));
 final toCurrencyRef = Ref.scoped((ctx) => Beacon.writable('EUR'));
@@ -122,7 +142,7 @@ class _CurrencyConverterContent extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                '$amt',
+                                formatCurrency('$amt'),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -133,7 +153,7 @@ class _CurrencyConverterContent extends StatelessWidget {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                converted,
+                                formatCurrency(converted),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -144,7 +164,7 @@ class _CurrencyConverterContent extends StatelessWidget {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                '$largeAmt',
+                                formatCurrency('$largeAmt'),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -155,7 +175,7 @@ class _CurrencyConverterContent extends StatelessWidget {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                largeConverted,
+                                formatCurrency(largeConverted),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -194,7 +214,7 @@ class _CurrencyConverterContent extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      amount.isEmpty ? '0' : amount,
+                      formatCurrency(amount.isEmpty ? '0' : amount),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -227,9 +247,11 @@ class _CurrencyConverterContent extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      ((amount.isEmpty ? 0.0 : double.parse(amount)) *
-                              (rates[toCurrency]! / rates[fromCurrency]!))
-                          .toStringAsFixed(2),
+                      formatCurrency(
+                        ((amount.isEmpty ? 0.0 : double.parse(amount)) *
+                                (rates[toCurrency]! / rates[fromCurrency]!))
+                            .toStringAsFixed(2),
+                      ),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
