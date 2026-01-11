@@ -36,7 +36,8 @@ class _CurrencyConverterContent extends StatelessWidget {
 
     final rates = {'USD': 1.0, 'EUR': 0.92, 'GBP': 0.79, 'JPY': 149.50};
 
-    final quickAmounts = [5, 10, 15, 20, 50, 100];
+    final quickAmounts = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+    final largeAmounts = [55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 250];
 
     return Column(
       children: [
@@ -61,7 +62,7 @@ class _CurrencyConverterContent extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         toCurrency,
@@ -69,6 +70,30 @@ class _CurrencyConverterContent extends StatelessWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.blue,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        fromCurrency,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        toCurrency,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -85,8 +110,14 @@ class _CurrencyConverterContent extends StatelessWidget {
                       final converted =
                           ((amt * (rates[toCurrency]! / rates[fromCurrency]!))
                               .toStringAsFixed(2));
+                      final largeAmt =
+                          largeAmounts[index % largeAmounts.length];
+                      final largeConverted =
+                          ((largeAmt *
+                                  (rates[toCurrency]! / rates[fromCurrency]!))
+                              .toStringAsFixed(2));
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 3.5),
                         child: Row(
                           children: [
                             Expanded(
@@ -99,10 +130,32 @@ class _CurrencyConverterContent extends StatelessWidget {
                                 textAlign: TextAlign.center,
                               ),
                             ),
-                            const SizedBox(width: 20),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 converted,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '$largeAmt',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                largeConverted,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -123,7 +176,6 @@ class _CurrencyConverterContent extends StatelessWidget {
         // Currency switcher
         Container(
           color: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
