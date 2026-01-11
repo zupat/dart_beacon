@@ -6,11 +6,12 @@ class NoRatesAvailable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = controllerRef.of(context);
-    final rates = controller.allRates;
+    final rates = controller.allRates.watch(context);
     return Center(
       child: rates.isError
           ? Center(
               child: Column(
+                mainAxisAlignment: .center,
                 children: [
                   Text(
                     'Error loading currency rates.',
@@ -20,7 +21,10 @@ class NoRatesAvailable extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  FilledButton(onPressed: rates.reset, child: Text('retry')),
+                  FilledButton(
+                    onPressed: controller.allRates.reset,
+                    child: Text('retry'),
+                  ),
                 ],
               ),
             )
