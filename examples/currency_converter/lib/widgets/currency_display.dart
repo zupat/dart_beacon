@@ -43,15 +43,20 @@ class CurrencyDisplay extends StatelessWidget {
               ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _CurrencyValue(SelectorType.from),
+                Expanded(child: _CurrencyValue(SelectorType.from)),
                 Container(
                   height: 20,
                   width: .5,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
-                _CurrencyValue(SelectorType.to),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _CurrencyValue(SelectorType.to),
+                  ),
+                ),
               ],
             ),
           ),
