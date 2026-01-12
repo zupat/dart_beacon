@@ -13,21 +13,6 @@ class _CurrencyValue extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        border: type == SelectorType.from
-            ? Border(
-                left: BorderSide(
-                  color: Theme.of(context).colorScheme.primary,
-                  width: 2,
-                ),
-              )
-            : Border(
-                right: BorderSide(
-                  color: Theme.of(context).colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-      ),
       child: Text(
         value,
         style: TextStyle(
@@ -48,28 +33,43 @@ class CurrencyDisplay extends StatelessWidget {
     return Container(
       color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          Row(
-            spacing: 10,
-            children: [
-              _CurrencySelector(SelectorType.from),
-              _CurrencyValue(SelectorType.from),
-            ],
-          ),
-          IconButton(
-            onPressed: controllerRef.read(context).swapCurrencies,
-            icon: Icon(
-              Icons.swap_horiz,
-              color: Theme.of(context).colorScheme.primary,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Theme.of(context).colorScheme.onSurface,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _CurrencyValue(SelectorType.from),
+                Container(
+                  height: 20,
+                  width: 1,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                _CurrencyValue(SelectorType.to),
+              ],
             ),
           ),
           Row(
-            spacing: 10,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _CurrencyValue(SelectorType.to),
-              _CurrencySelector(SelectorType.to),
+              Row(
+                spacing: 10,
+                children: [_CurrencySelector(SelectorType.from)],
+              ),
+              IconButton(
+                onPressed: controllerRef.read(context).swapCurrencies,
+                icon: Icon(
+                  Icons.swap_horiz,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              Row(spacing: 10, children: [_CurrencySelector(SelectorType.to)]),
             ],
           ),
         ],
