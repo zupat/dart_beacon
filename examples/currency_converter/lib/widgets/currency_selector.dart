@@ -1,18 +1,22 @@
 part of 'widgets.dart';
 
-class _CurrencySelector extends StatelessWidget {
-  final WritableBeacon<String> currencyBeacon;
-  final String current;
-  final String label;
+enum SelectorType { from, to }
 
-  const _CurrencySelector(this.currencyBeacon, this.current, this.label);
+class _CurrencySelector extends StatelessWidget {
+  final SelectorType type;
+
+  const _CurrencySelector(this.type);
 
   @override
   Widget build(BuildContext context) {
-    final enabledCurrencies = controllerRef.select(
-      context,
-      (c) => c.enabledCurrencies,
-    );
+    final controller = controllerRef.of(context);
+    final enabledCurrencies = controller.enabledCurrencies.watch(context);
+
+    final currencyBeacon = type == SelectorType.from
+        ? controller.fromCurrency
+        : controller.toCurrency;
+    final current = currencyBeacon.watch(context);
+
     return PopupMenuButton<String>(
       onSelected: (value) => currencyBeacon.value = value,
       itemBuilder: (BuildContext context) => enabledCurrencies
