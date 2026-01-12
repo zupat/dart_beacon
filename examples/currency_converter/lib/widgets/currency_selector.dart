@@ -17,6 +17,11 @@ class _CurrencySelector extends StatelessWidget {
         : controller.toCurrency;
     final current = currencyBeacon.watch(context);
 
+    final animationOffsets = controller.animationOffsets.watch(context);
+    final offset = type == SelectorType.from
+        ? animationOffsets.$1
+        : animationOffsets.$2;
+
     return PopupMenuButton<String>(
       onSelected: (value) => currencyBeacon.value = value,
       itemBuilder: (BuildContext context) => enabledCurrencies
@@ -24,11 +29,17 @@ class _CurrencySelector extends StatelessWidget {
             (currency) => PopupMenuItem(value: currency, child: Text(currency)),
           )
           .toList(),
-      child: Text(
-        '$current ▽',
-        style: TextStyle(
-          fontSize: 16,
-          color: Theme.of(context).colorScheme.onSurface,
+      child: AnimatedSlide(
+        offset: Offset(offset, 0),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.fastOutSlowIn,
+        child: Text(
+          '$current ▽',
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          textAlign: type == SelectorType.to ? TextAlign.right : null,
         ),
       ),
     );

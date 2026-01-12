@@ -39,7 +39,7 @@ class CurrencyDisplay extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(
                 color: Theme.of(context).colorScheme.onSurface,
-                width: 1,
+                width: .1,
               ),
             ),
             child: Row(
@@ -48,7 +48,7 @@ class CurrencyDisplay extends StatelessWidget {
                 _CurrencyValue(SelectorType.from),
                 Container(
                   height: 20,
-                  width: 1,
+                  width: .5,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
                 _CurrencyValue(SelectorType.to),
@@ -58,10 +58,7 @@ class CurrencyDisplay extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                spacing: 10,
-                children: [_CurrencySelector(SelectorType.from)],
-              ),
+              Expanded(child: _CurrencySelector(SelectorType.from)),
               IconButton(
                 onPressed: controllerRef.read(context).swapCurrencies,
                 icon: Icon(
@@ -69,7 +66,7 @@ class CurrencyDisplay extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              Row(spacing: 10, children: [_CurrencySelector(SelectorType.to)]),
+              Expanded(child: _CurrencySelector(SelectorType.to)),
             ],
           ),
         ],
