@@ -17,7 +17,18 @@ class CurrencyConverterView extends StatelessWidget {
             onPressed: () {
               showModalBottomSheet(
                 context: context,
-                builder: (context) => const SettingsPanel(),
+                isScrollControlled: true,
+                builder: (context) {
+                  final screenHeight = MediaQuery.sizeOf(context).height;
+                  return Wrap(
+                    children: [
+                      SizedBox(
+                        height: screenHeight * 0.80,
+                        child: const SettingsPanel(),
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),

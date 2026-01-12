@@ -65,7 +65,10 @@ class CurrencyDisplay extends StatelessWidget {
             children: [
               Expanded(child: _CurrencySelector(SelectorType.from)),
               IconButton(
-                onPressed: controllerRef.read(context).swapCurrencies,
+                onPressed: () {
+                  controllerRef.read(context).swapCurrencies();
+                  _startAnimation();
+                },
                 icon: Icon(
                   Icons.swap_horiz,
                   color: Theme.of(context).colorScheme.primary,

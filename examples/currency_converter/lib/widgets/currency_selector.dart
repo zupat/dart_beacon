@@ -17,7 +17,7 @@ class _CurrencySelector extends StatelessWidget {
         : controller.toCurrency;
     final current = currencyBeacon.watch(context);
 
-    final animationOffsets = controller.animationOffsets.watch(context);
+    final animationOffsets = _slideOffsets.watch(context);
     final offset = type == SelectorType.from
         ? animationOffsets.$1
         : animationOffsets.$2;

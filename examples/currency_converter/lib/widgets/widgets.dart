@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fast_currency_converter/deps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,3 +12,4 @@ part 'currency_display.dart';
 part 'currency_selector.dart';
 part 'numpad.dart';
 part 'settings_panel.dart';
+part 'slide_animation.dart';
