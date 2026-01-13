@@ -1223,9 +1223,48 @@ final count = Beacon.writable(10);
 
 final stream = count.stream;
 
-Future.delayed(Duration(milliseconds: 1), () => count.value = 20);
+Future.delayed(Duration(milliseconds: 1), () {
+  count.value = 20;
+  BeaconScheduler.flush();
+});
 
-expect(stream, emitsInOrder([10, 20]));
+Future.delayed(Duration(milliseconds: 1), () => count.value = 30);
+
+expect(stream, emitsInOrder([10, 20, 30]));
+```
+
+or
+
+```dart
+final count = Beacon.writable(10);
+
+expect(count.stream, emitsInOrder([10, 20, 30]));
+
+BeaconScheduler.flush(); // allow stream to pick up the 10
+
+count.value = 20;
+BeaconScheduler.flush();
+
+count.value = 30;
+BeaconScheduler.flush();
+```
+
+or
+
+```dart
+final count = Beacon.writable(10);
+
+final stream = count.stream;
+
+await expectLater(stream, emits(10));
+
+count.value = 20;
+
+await expectLater(stream, emits(20));
+
+count.value = 30;
+
+await expectLater(stream, emits(30));
 ```
 
 ### Testing beacons with chaining methods
@@ -1237,11 +1276,52 @@ expect(stream, emitsInOrder([10, 20]));
 ```dart
 final count = Beacon.writable(10);
 
-final buff = count.buffer(2);
+final buff = count.buffer(3);
+
+BeaconScheduler.flush(); // allow buffer to read first value
 
 count.value = 20;
+BeaconScheduler.flush();
 
-expect(buff.value, equals([10, 20]));
+count.value = 30;
+BeaconScheduler.flush();
+
+expect(buff.value, equals([10, 20, 30]));
+```
+
+or
+
+```dart
+final count = Beacon.writable(10);
+
+final buff = count.buffer(3);
+
+await Future.delayed(Duration(milliseconds: 1)); // allow buffer to read first value
+
+count.value = 20;
+await Future.delayed(Duration(milliseconds: 1));
+
+count.value = 30;
+
+expect(await buff.next(), equals([10, 20, 30]));
+```
+
+or
+
+```dart
+final count = Beacon.writable(10);
+
+final buff = count.buffer(3);
+
+await Future.delayed(Duration(milliseconds: 1)); // allow buffer to read first value
+
+count.value = 20;
+await Future.delayed(Duration(milliseconds: 1));
+
+count.value = 30;
+await Future.delayed(Duration(milliseconds: 1));
+
+expect(buff.value, equals([10, 20, 30]));
 ```
 
 ##### anyBeacon.next()
