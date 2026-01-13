@@ -32,9 +32,9 @@ class Numpad extends StatelessWidget {
             if (index < 9) {
               return _NumPadButton('${index + 1}');
             } else if (index == 9) {
-              return _NumPadButton('0');
-            } else if (index == 10) {
               return _NumPadButton('.');
+            } else if (index == 10) {
+              return _NumPadButton('0');
             } else {
               return _ClearButton();
             }
