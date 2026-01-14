@@ -14,7 +14,10 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     super.initialValue,
     super.name,
     this.manualStart = false,
-  }) {
+  }) : assert(
+          interval < totalDuration,
+          'Interval must be less than totalDuration.',
+        ) {
     if (manualStart) {
       assert(
         !_isEmpty,
