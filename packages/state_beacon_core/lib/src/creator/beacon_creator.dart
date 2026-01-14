@@ -506,33 +506,36 @@ class _BeaconCreator {
   }) =>
       PeriodicBeacon<T>(duration, compute, name: name);
 
-  /// Creates a [ProgressBeacon] that emits values periodically.
+  /// Creates a [ProgressBeacon] that emits values periodically with progress.
+  ///
+  /// The [totalDuration] specifies how long the beacon will emit values.
+  /// Progress is calculated as elapsed time divided by total duration.
   ///
   /// Example:
   /// ```dart
-  /// final myBeacon = Beacon.periodic(Duration(seconds: 1), (i, progress) => i + 1);
-  ///
-  /// final nextFive = await myBeacon.buffer(5).next();
-  ///
-  /// expect(nextFive, [1, 2, 3, 4, 5]);
+  /// final myBeacon = Beacon.progress(
+  ///   Duration(milliseconds: 16),
+  ///   (progress) => progress,
+  ///   totalDuration: Duration(seconds: 1),
+  /// );
   /// ```
   ///
   /// If [manualStart] is `true`, the beacon will not start emitting values
   /// until `start()` is called. In that case, [initialValue] must be
   /// provided so the beacon has a well-defined value before it starts.
   ProgressBeacon<T> progress<T>(
-    Duration duration,
-    T Function(int, double) compute, {
+    Duration period,
+    T Function(double) compute, {
+    required Duration totalDuration,
     String? name,
-    int? maxIterations,
     bool manualStart = false,
     T? initialValue,
   }) =>
       ProgressBeacon<T>(
-        duration,
+        period,
         compute,
         name: name,
-        maxIterations: maxIterations,
+        totalDuration: totalDuration,
         manualStart: manualStart,
         initialValue: initialValue,
       );

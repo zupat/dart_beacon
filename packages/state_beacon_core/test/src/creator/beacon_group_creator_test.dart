@@ -35,7 +35,7 @@ void main() {
     final derivedFuture = group.future<int>(() async => filtered() + 1);
     final derivedStream = group.streamRaw(Stream.empty);
     final periodic = group.periodic(k10ms, (i) => i + 1);
-    final progress = group.progress(k10ms, (i, progress) => i + 1);
+    final progress = group.progress(k10ms, (p) => p, totalDuration: k10ms * 5);
 
     group.effect(() {});
 

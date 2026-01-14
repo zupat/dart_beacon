@@ -4,79 +4,128 @@ import 'package:test/test.dart';
 import '../../common.dart';
 
 void main() {
-  test('should have initial value', () {
-    final myBeacon = Beacon.progress(k10ms, (i, progress) => i + 1);
-    expect(myBeacon.peek(), 1);
+  test('should have initial value of 0.0 progress', () {
+    final myBeacon = Beacon.progress(
+      k10ms,
+      (progress) => progress,
+      totalDuration: k10ms * 5,
+    );
+    expect(myBeacon.peek(), 0.0);
+    myBeacon.dispose();
   });
 
-  test('should emit values periodically', () async {
-    final myBeacon = Beacon.progress(k10ms, (i, progress) => i + 1);
+  test('should emit values periodically with progress', () async {
+    final myBeacon = Beacon.progress<double>(
+      k10ms,
+      (progress) => progress,
+      totalDuration: k10ms * 3,
+    );
 
-    final nextFive = await myBeacon.buffer(5).next();
+    // Wait for completion
+    await delay(k10ms * 5);
 
-    expect(nextFive, [1, 2, 3, 4, 5]);
+    // Final value should be 1.0 (100% progress)
+    expect(myBeacon.peek(), equals(1.0));
 
     myBeacon.dispose();
 
     expect(myBeacon.isDisposed, true);
   });
 
-  test('should pause and resume emition of values', () async {
-    // BeaconObserver.useLogging();
-
-    final myBeacon = Beacon.progress(k10ms, (i, progress) => i + 1);
-
-    final buff = myBeacon.buffer(5);
+  test('should pause and resume emission of values', () async {
+    final myBeacon = Beacon.progress<double>(
+      k10ms,
+      (progress) => progress,
+      totalDuration: k10ms * 10,
+    );
 
     await delay(k10ms * 2);
 
-    final length = buff.currentBuffer().length;
-
-    expect(length, inInclusiveRange(1, 3));
+    final progressBeforePause = myBeacon.peek();
+    expect(progressBeforePause, greaterThan(0.0));
+    expect(progressBeforePause, lessThan(1.0));
 
     myBeacon.pause();
 
-    await delay(k10ms * 4);
+    await delay(k10ms * 3);
 
-    expect(buff.currentBuffer().length, length);
+    // Progress should not have changed while paused
+    expect(myBeacon.peek(), equals(progressBeforePause));
 
     myBeacon.resume();
 
-    final nextFive = await buff.next();
+    await delay(k10ms * 10);
 
-    expect(nextFive, [1, 2, 3, 4, 5]);
+    // Should have completed after resume
+    expect(myBeacon.peek(), equals(1.0));
+
+    myBeacon.dispose();
   });
 
   test('manualStart uses provided initialValue and does not auto-start',
       () async {
-    final myBeacon = Beacon.progress<int>(
+    final myBeacon = Beacon.progress<double>(
       k10ms,
-      (i, progress) => i + 1,
+      (progress) => progress,
+      totalDuration: k10ms * 3,
       manualStart: true,
       initialValue: 0,
     );
 
-    expect(myBeacon.peek(), 0);
+    expect(myBeacon.peek(), 0.0);
 
     await delay(k10ms * 3);
 
     // Still initial value because start() has not been called.
-    expect(myBeacon.peek(), 0);
+    expect(myBeacon.peek(), 0.0);
+
+    myBeacon.dispose();
   });
 
-  test('progress goes from 0.0 to 1.0 when maxIterations is set', () async {
+  test('progress goes from 0.0 to 1.0 based on elapsed time', () async {
+    final values = <double>[];
     final beacon = Beacon.progress<double>(
       k10ms,
-      (i, progress) => progress,
-      maxIterations: 3,
+      (progress) => progress,
+      totalDuration: k10ms * 3,
     );
 
-    final values = await beacon.buffer(4).next();
+    beacon.subscribe(values.add);
+
+    // Wait for completion
+    await delay(k10ms * 5);
 
     expect(values.first, equals(0.0));
     expect(values.last, equals(1.0));
     for (final v in values) {
       expect(v, inInclusiveRange(0.0, 1.0));
     }
+
+    beacon.dispose();
+  });
+
+  test('start() restarts the beacon from beginning', () async {
+    final beacon = Beacon.progress<double>(
+      k10ms,
+      (progress) => progress,
+      totalDuration: k10ms * 3,
+    );
+
+    // Wait for completion
+    await delay(k10ms * 5);
+
+    expect(beacon.peek(), equals(1.0));
+
+    // Restart
+    beacon.start();
+
+    // Should have reset progress
+    await delay(k10ms);
+
+    final progressAfterRestart = beacon.peek();
+    expect(progressAfterRestart, lessThan(1.0));
+    expect(progressAfterRestart, greaterThan(0.0));
+
+    beacon.dispose();
   });
 }

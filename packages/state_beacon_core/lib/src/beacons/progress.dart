@@ -10,11 +10,11 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   ProgressBeacon(
     this._period,
     this._compute, {
+    required Duration totalDuration,
     super.initialValue,
     super.name,
-    int? maxIterations,
     bool manualStart = false,
-  })  : _maxIterations = maxIterations,
+  })  : _totalDuration = totalDuration,
         _manualStart = manualStart {
     if (_manualStart) {
       assert(
@@ -22,18 +22,18 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
         'An initialValue must be provided when manualStart is true.',
       );
     } else {
-      _setValue(_compute(_count, _computeProgress(_count)));
+      _setValue(_compute(0));
       start();
     }
   }
 
   final Duration _period;
-  final T Function(int count, double progress) _compute;
-  final int? _maxIterations;
+  final T Function(double progress) _compute;
+  final Duration _totalDuration;
   final bool _manualStart;
 
   StreamSubscription<dynamic>? _subscription;
-  var _count = 0;
+  Duration _elapsed = Duration.zero;
 
   /// Starts emitting values periodically.
   ///
@@ -45,26 +45,27 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     // Stop any existing progression.
     _subscription?.cancel();
 
-    // Restart the iteration count from the beginning.
-    _count = 0;
+    // Reset elapsed time for a fresh start.
+    _elapsed = Duration.zero;
 
     _subscription = Stream<dynamic>.periodic(_period).listen((_) {
       if (_isDisposed) return;
 
-      _count++;
-      _setValue(_compute(_count, _computeProgress(_count)));
+      _elapsed += _period;
+      final progress = _computeProgress();
+      _setValue(_compute(progress));
 
-      if (_maxIterations != null && _count >= _maxIterations!) {
+      if (progress >= 1.0) {
         stop();
       }
     });
   }
 
-  /// Stops emitting values and resets the iteration count.
+  /// Stops emitting values and resets the elapsed time.
   void stop() {
     _subscription?.cancel();
     _subscription = null;
-    _count = 0;
+    _elapsed = Duration.zero;
   }
 
   /// Pauses emission of values.
@@ -73,14 +74,12 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   /// Resumes emission of values.
   void resume() => _subscription?.resume();
 
-  double _computeProgress(int count) {
-    if (_maxIterations == null || _maxIterations == 0) {
-      return 0;
+  double _computeProgress() {
+    if (_totalDuration.inMicroseconds == 0) {
+      return 1;
     }
-    final raw = count / _maxIterations!;
-    if (raw <= 0) return 0;
-    if (raw >= 1) return 1;
-    return raw;
+    final raw = _elapsed.inMicroseconds / _totalDuration.inMicroseconds;
+    return raw.clamp(0.0, 1.0);
   }
 
   @override
