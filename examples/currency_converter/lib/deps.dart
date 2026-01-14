@@ -12,7 +12,7 @@ Future<void> startUp() async {
   final controller = CurrencyController(sharedPref);
 
   // await initial data load
-  await controller.allRates.toFuture();
+  await controller.allRates.toFuture(resetIfError: true);
 
   sharedPrefRef = Ref.singleton<SharedPreferences>(() => sharedPref);
   controllerRef = Ref.scoped<CurrencyController>((_) => controller);

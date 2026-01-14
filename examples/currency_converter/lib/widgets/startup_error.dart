@@ -20,7 +20,7 @@ class StartupError extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         FilledButton(
-          onPressed: controllerRef.read(context).allRates.reset,
+          onPressed: startUpBeacon.read(context).reset,
           child: Text('retry'),
         ),
       ],
