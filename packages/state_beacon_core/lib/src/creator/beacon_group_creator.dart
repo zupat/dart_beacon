@@ -367,11 +367,26 @@ class BeaconGroup extends _BeaconCreator {
     Duration duration,
     T Function(int) compute, {
     String? name,
+  }) {
+    final beacon = super.periodic<T>(
+      duration,
+      compute,
+      name: name,
+    );
+    add(beacon);
+    return beacon;
+  }
+
+  @override
+  ProgressBeacon<T> progress<T>(
+    Duration duration,
+    T Function(int, double) compute, {
+    String? name,
     int? maxIterations,
     bool manualStart = false,
     T? initialValue,
   }) {
-    final beacon = super.periodic<T>(
+    final beacon = super.progress<T>(
       duration,
       compute,
       name: name,

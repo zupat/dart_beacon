@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:fast_currency_converter/deps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
