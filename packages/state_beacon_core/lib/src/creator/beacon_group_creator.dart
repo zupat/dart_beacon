@@ -367,11 +367,17 @@ class BeaconGroup extends _BeaconCreator {
     Duration duration,
     T Function(int) compute, {
     String? name,
+    int? maxIterations,
+    bool manualStart = false,
+    T? initialValue,
   }) {
     final beacon = super.periodic<T>(
       duration,
       compute,
       name: name,
+      maxIterations: maxIterations,
+      manualStart: manualStart,
+      initialValue: initialValue,
     );
     add(beacon);
     return beacon;

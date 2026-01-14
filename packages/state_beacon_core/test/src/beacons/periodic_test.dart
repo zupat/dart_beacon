@@ -46,4 +46,20 @@ void main() {
 
     expect(nextFive, [1, 2, 3, 4, 5]);
   });
+
+  test('manualStart uses provided initialValue and does not auto-start', () async {
+    final myBeacon = Beacon.periodic<int>(
+      k10ms,
+      (i) => i + 1,
+      manualStart: true,
+      initialValue: 0,
+    );
+
+    expect(myBeacon.peek(), 0);
+
+    await delay(k10ms * 3);
+
+    // Still initial value because start() has not been called.
+    expect(myBeacon.peek(), 0);
+  });
 }

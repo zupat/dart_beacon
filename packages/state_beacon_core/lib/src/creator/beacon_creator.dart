@@ -499,12 +499,26 @@ class _BeaconCreator {
   ///
   /// expect(nextFive, [1, 2, 3, 4, 5]);
   /// ```
+  ///
+  /// If [manualStart] is `true`, the beacon will not start emitting values
+  /// until `start()` is called. In that case, [initialValue] must be
+  /// provided so the beacon has a well-defined value before it starts.
   PeriodicBeacon<T> periodic<T>(
     Duration duration,
     T Function(int) compute, {
     String? name,
+    int? maxIterations,
+    bool manualStart = false,
+    T? initialValue,
   }) =>
-      PeriodicBeacon<T>(duration, compute, name: name);
+      PeriodicBeacon<T>(
+        duration,
+        compute,
+        name: name,
+        maxIterations: maxIterations,
+        manualStart: manualStart,
+        initialValue: initialValue,
+      );
 
   /// Creates an effect based on a provided function. The provided function will be called
   /// whenever one of its dependencies change.
