@@ -63,6 +63,7 @@ part 'beacons/timestamp.dart';
 part 'beacons/undo_redo.dart';
 part 'beacons/writable.dart';
 part 'beacons/periodic.dart';
+part 'beacons/progress.dart';
 part 'consumer.dart';
 part 'consumers/effect.dart';
 part 'consumers/subscription.dart';

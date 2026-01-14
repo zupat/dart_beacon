@@ -35,23 +35,28 @@ void main() {
     final derivedFuture = group.future<int>(() async => filtered() + 1);
     final derivedStream = group.streamRaw(Stream.empty);
     final periodic = group.periodic(k10ms, (i) => i + 1);
+    final progress = group.progress(
+      interval: k10ms,
+      totalDuration: k10ms * 5,
+      onProgress: (p) => p,
+    );
 
     group.effect(() {});
 
     // ignore: inference_failure_on_function_invocation, unnecessary_lambdas
     final _ = group.family((int i) => group.readable(i));
 
-    expect(group.beaconCount, 25);
-    expect(group.beacons.length, 25);
-    expect(created, 25);
+    expect(group.beaconCount, 26);
+    expect(group.beacons.length, 26);
+    expect(created, 26);
 
     cancel();
 
     group.writable(0);
 
-    expect(group.beaconCount, 26);
-    expect(group.beacons.length, 26);
-    expect(created, 25);
+    expect(group.beaconCount, 27);
+    expect(group.beacons.length, 27);
+    expect(created, 26);
 
     writable.increment();
 
@@ -91,6 +96,7 @@ void main() {
     expect(derivedFuture.isDisposed, true);
     expect(derivedStream.isDisposed, true);
     expect(periodic.isDisposed, true);
+    expect(progress.isDisposed, true);
 
     expect(group.beaconCount, 0);
   });
