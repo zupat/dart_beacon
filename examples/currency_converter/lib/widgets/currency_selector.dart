@@ -15,12 +15,6 @@ class _CurrencySelector extends StatelessWidget {
     final currencyBeacon = type == SelectorType.from
         ? controller.fromCurrency
         : controller.toCurrency;
-    final current = currencyBeacon.watch(context);
-
-    final animationOffsets = _slideOffsets.watch(context);
-    final offset = type == SelectorType.from
-        ? animationOffsets.$1
-        : animationOffsets.$2;
 
     return PopupMenuButton<String>(
       onSelected: (value) => currencyBeacon.value = value,
@@ -29,18 +23,29 @@ class _CurrencySelector extends StatelessWidget {
             (currency) => PopupMenuItem(value: currency, child: Text(currency)),
           )
           .toList(),
-      child: AnimatedSlide(
-        offset: Offset(offset, 0),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.fastOutSlowIn,
-        child: Text(
-          '$current ▽',
-          style: TextStyle(
-            fontSize: 16,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          textAlign: type == SelectorType.to ? TextAlign.right : null,
-        ),
+      child: Builder(
+        builder: (context) {
+          final current = currencyBeacon.watch(context);
+
+          final animationOffsets = _slideOffsets.watch(context);
+          final offset = type == SelectorType.from
+              ? animationOffsets.$1
+              : animationOffsets.$2;
+
+          return AnimatedSlide(
+            offset: Offset(offset, 0),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.fastOutSlowIn,
+            child: Text(
+              '$current ▽',
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              textAlign: type == SelectorType.to ? TextAlign.right : null,
+            ),
+          );
+        },
       ),
     );
   }

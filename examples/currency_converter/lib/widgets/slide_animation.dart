@@ -7,7 +7,7 @@ part of 'widgets.dart';
 const _kSlideDuration = Duration(milliseconds: 300);
 const _kSlideInterval = Duration(milliseconds: 15);
 
-final _slideOffsets = Beacon.progress<(double, double)>(
+final _slideOffsets = Beacon.progress(
   interval: _kSlideInterval,
   totalDuration: _kSlideDuration,
   manualStart: true,
