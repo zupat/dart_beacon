@@ -378,17 +378,17 @@ class BeaconGroup extends _BeaconCreator {
   }
 
   @override
-  ProgressBeacon<T> progress<T>(
-    Duration period,
-    T Function(double) compute, {
+  ProgressBeacon<T> progress<T>({
+    required Duration interval,
+    required T Function(double) onProgress,
     required Duration totalDuration,
     String? name,
     bool manualStart = false,
     T? initialValue,
   }) {
     final beacon = super.progress<T>(
-      period,
-      compute,
+      interval: interval,
+      onProgress: onProgress,
       name: name,
       totalDuration: totalDuration,
       manualStart: manualStart,

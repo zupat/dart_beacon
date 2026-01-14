@@ -7,30 +7,36 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   /// If [manualStart] is `true`, the beacon will not start emitting values
   /// until [start] is called. In that case an [initialValue] must be
   /// provided so the beacon has a well-defined value before it starts.
-  ProgressBeacon(
-    this._period,
-    this._compute, {
-    required Duration totalDuration,
+  ProgressBeacon({
+    required this.interval,
+    required this.onProgress,
+    required this.totalDuration,
     super.initialValue,
     super.name,
-    bool manualStart = false,
-  })  : _totalDuration = totalDuration,
-        _manualStart = manualStart {
-    if (_manualStart) {
+    this.manualStart = false,
+  }) {
+    if (manualStart) {
       assert(
         !_isEmpty,
         'An initialValue must be provided when manualStart is true.',
       );
     } else {
-      _setValue(_compute(0));
+      _setValue(onProgress(0));
       start();
     }
   }
 
-  final Duration _period;
-  final T Function(double progress) _compute;
-  final Duration _totalDuration;
-  final bool _manualStart;
+  /// The interval at which values are emitted.
+  final Duration interval;
+
+  /// The function that computes the value based on progress.
+  final T Function(double progress) onProgress;
+
+  /// The total duration over which progress is calculated.
+  final Duration totalDuration;
+
+  /// Whether the progression should be started manually.
+  final bool manualStart;
 
   StreamSubscription<dynamic>? _subscription;
   Duration _elapsed = Duration.zero;
@@ -48,12 +54,12 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     // Reset elapsed time for a fresh start.
     _elapsed = Duration.zero;
 
-    _subscription = Stream<dynamic>.periodic(_period).listen((_) {
+    _subscription = Stream<dynamic>.periodic(interval).listen((_) {
       if (_isDisposed) return;
 
-      _elapsed += _period;
+      _elapsed += interval;
       final progress = _computeProgress();
-      _setValue(_compute(progress));
+      _setValue(onProgress(progress));
 
       if (progress >= 1.0) {
         stop();
@@ -75,10 +81,10 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   void resume() => _subscription?.resume();
 
   double _computeProgress() {
-    if (_totalDuration.inMicroseconds == 0) {
+    if (totalDuration.inMicroseconds == 0) {
       return 1;
     }
-    final raw = _elapsed.inMicroseconds / _totalDuration.inMicroseconds;
+    final raw = _elapsed.inMicroseconds / totalDuration.inMicroseconds;
     return raw.clamp(0.0, 1.0);
   }
 

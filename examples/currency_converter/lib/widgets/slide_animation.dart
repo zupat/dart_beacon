@@ -8,16 +8,16 @@ const _kSlideDuration = Duration(milliseconds: 300);
 const _kSlideInterval = Duration(milliseconds: 15);
 
 final _slideOffsets = Beacon.progress<(double, double)>(
-  _kSlideInterval,
-  (progress) {
+  interval: _kSlideInterval,
+  totalDuration: _kSlideDuration,
+  manualStart: true,
+  initialValue: (0.0, 0.0),
+  onProgress: (progress) {
     // Move from sides to center: -1.0 -> 0.0 and 1.0 -> 0.0
     final leftOffset = -1.0 + (progress * 1.0);
     final rightOffset = 1.0 - (progress * 1.0);
     return (leftOffset, rightOffset);
   },
-  totalDuration: _kSlideDuration,
-  manualStart: true,
-  initialValue: (0.0, 0.0),
 );
 
 void _startAnimation() {

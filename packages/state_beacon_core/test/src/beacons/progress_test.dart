@@ -6,8 +6,8 @@ import '../../common.dart';
 void main() {
   test('should have initial value of 0.0 progress', () {
     final myBeacon = Beacon.progress(
-      k10ms,
-      (progress) => progress,
+      interval: k10ms,
+      onProgress: (progress) => progress,
       totalDuration: k10ms * 5,
     );
     expect(myBeacon.peek(), 0.0);
@@ -16,8 +16,8 @@ void main() {
 
   test('should emit values periodically with progress', () async {
     final myBeacon = Beacon.progress<double>(
-      k10ms,
-      (progress) => progress,
+      interval: k10ms,
+      onProgress: (progress) => progress,
       totalDuration: k10ms * 3,
     );
 
@@ -34,8 +34,8 @@ void main() {
 
   test('should pause and resume emission of values', () async {
     final myBeacon = Beacon.progress<double>(
-      k10ms,
-      (progress) => progress,
+      interval: k10ms,
+      onProgress: (progress) => progress,
       totalDuration: k10ms * 10,
     );
 
@@ -65,8 +65,8 @@ void main() {
   test('manualStart uses provided initialValue and does not auto-start',
       () async {
     final myBeacon = Beacon.progress<double>(
-      k10ms,
-      (progress) => progress,
+      interval: k10ms,
+      onProgress: (progress) => progress,
       totalDuration: k10ms * 3,
       manualStart: true,
       initialValue: 0,
@@ -85,8 +85,8 @@ void main() {
   test('progress goes from 0.0 to 1.0 based on elapsed time', () async {
     final values = <double>[];
     final beacon = Beacon.progress<double>(
-      k10ms,
-      (progress) => progress,
+      interval: k10ms,
+      onProgress: (progress) => progress,
       totalDuration: k10ms * 3,
     );
 
@@ -106,8 +106,8 @@ void main() {
 
   test('start() restarts the beacon from beginning', () async {
     final beacon = Beacon.progress<double>(
-      k10ms,
-      (progress) => progress,
+      interval: k10ms,
+      onProgress: (progress) => progress,
       totalDuration: k10ms * 3,
     );
 

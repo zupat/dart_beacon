@@ -523,17 +523,17 @@ class _BeaconCreator {
   /// If [manualStart] is `true`, the beacon will not start emitting values
   /// until `start()` is called. In that case, [initialValue] must be
   /// provided so the beacon has a well-defined value before it starts.
-  ProgressBeacon<T> progress<T>(
-    Duration period,
-    T Function(double) compute, {
+  ProgressBeacon<T> progress<T>({
+    required Duration interval,
+    required T Function(double) onProgress,
     required Duration totalDuration,
     String? name,
     bool manualStart = false,
     T? initialValue,
   }) =>
       ProgressBeacon<T>(
-        period,
-        compute,
+        interval: interval,
+        onProgress: onProgress,
         name: name,
         totalDuration: totalDuration,
         manualStart: manualStart,
