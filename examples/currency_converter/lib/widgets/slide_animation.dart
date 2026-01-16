@@ -4,20 +4,15 @@ part of 'widgets.dart';
 // when the currencies are swapped.
 // It can be global since it lives for the lifetime of the app.
 
-const _kSlideDuration = Duration(milliseconds: 300);
-const _kSlideInterval = Duration(milliseconds: 15);
+const _kSlideDuration = Duration(milliseconds: 150);
+const _kSlideInterval = Duration(milliseconds: 150);
 
 final _slideOffsets = Beacon.progress(
   interval: _kSlideInterval,
   totalDuration: _kSlideDuration,
-  manualStart: true,
   initialValue: (0.0, 0.0),
-  onProgress: (progress) {
-    // Move from sides to center: -1.0 -> 0.0 and 1.0 -> 0.0
-    final leftOffset = -1.0 + (progress * 1.0);
-    final rightOffset = 1.0 - (progress * 1.0);
-    return (leftOffset, rightOffset);
-  },
+  onStart: () => (-0.1, 0.1),
+  onDone: () => (0.0, 0.0),
 );
 
 void _startAnimation() {
