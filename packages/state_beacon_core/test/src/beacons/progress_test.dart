@@ -174,9 +174,9 @@ void main() {
       totalDuration: k10ms * 10,
     );
 
-    beacon.subscribe(values.add);
+    beacon.subscribe(values.add, startNow: false);
 
-    await delay(k10ms * 2);
+    await delay(k10ms * 2.5);
     final progressBeforeStop = beacon.peek();
     expect(progressBeforeStop, greaterThan(0.0));
     expect(progressBeforeStop, lessThan(1.0));
@@ -311,8 +311,7 @@ void main() {
     beacon.dispose();
   });
 
-  test(
-      'should throw assertion error if onProgress and onDone are both missing',
+  test('should throw assertion error if onProgress and onDone are both missing',
       () {
     expect(
       () => Beacon.progress<double>(
