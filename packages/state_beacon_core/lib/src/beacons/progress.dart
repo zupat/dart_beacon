@@ -36,6 +36,11 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
         assert(
           onProgress != null || onDone != null,
           'If onProgress is not provided, onDone must be provided.',
+        ),
+        assert(
+          onDone == null || onProgress == null,
+          'If onDone is provided, onProgress must be null as onDone can'
+          ' be replicated easily in onProgress by checking if (progress >= 1.0).',
         ) {
     if (onStart != null) {
       assert(

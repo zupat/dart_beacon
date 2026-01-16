@@ -295,8 +295,8 @@ void main() {
     var doneCalled = false;
     final beacon = Beacon.progress<double>(
       interval: k10ms,
-      onProgress: (progress) => progress,
       totalDuration: k10ms * 3,
+      initialValue: 0,
       onDone: () {
         doneCalled = true;
         return 1.0;
@@ -309,6 +309,21 @@ void main() {
     expect(doneCalled, isTrue);
 
     beacon.dispose();
+  });
+
+  test(
+      'should throw assertion error if onProgress'
+      ' and onDone are both provided', () {
+    expect(
+      () => Beacon.progress<double>(
+        interval: k10ms,
+        onProgress: (progress) => progress,
+        onDone: () => 1.0,
+        totalDuration: k10ms * 3,
+        initialValue: 0,
+      ),
+      throwsAssertionError,
+    );
   });
 
   test('should throw assertion error if onProgress and onDone are both missing',
@@ -395,7 +410,7 @@ void main() {
     expect(values, contains(1.0));
 
     // Find index of 1.0
-    final index = values.indexOf(1.0);
+    final index = values.indexOf(1);
     expect(index, isNot(-1));
     expect(values.length, greaterThan(index + 1));
     expect(values[index + 1], equals(0.0));
