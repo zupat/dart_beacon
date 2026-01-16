@@ -28,7 +28,7 @@ void main() {
 
     final buff = myBeacon.buffer(5);
 
-    await delay(k10ms * 2);
+    await delay(k10ms * 2.2);
 
     final length = buff.currentBuffer().length;
 

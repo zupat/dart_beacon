@@ -22,6 +22,8 @@ export 'src/producer.dart'
         MapBeacon,
         PeriodicBeacon,
         Producer,
+        ProgressBeacon,
+        ProgressStatus,
         RawStreamBeacon,
         ReadableBeacon,
         ReadableBeaconWrapUtils,
