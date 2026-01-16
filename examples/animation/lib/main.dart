@@ -19,85 +19,73 @@ final _bounceAnimation = Beacon.progress(
   },
 );
 
-class BouncingBallView extends StatelessWidget {
-  const BouncingBallView({super.key});
+void main() {
+  runApp(
+    MaterialApp(
+      title: 'State Beacon Animation Demo',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: HomePage(),
+    ),
+  );
+}
+
+class BouncingBall extends StatelessWidget {
+  const BouncingBall({super.key});
 
   @override
   Widget build(BuildContext context) {
     final bounceProgress = _bounceAnimation.watch(context);
 
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Ground line
+          Positioned(
+            bottom: 50,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 2,
+              color: Colors.grey[300],
+            ),
+          ),
+          // Bouncing ball
+          Positioned(
+            bottom: 50 + bounceProgress, // Move up to 200px from ground
+            child: Icon(
+              Icons.sports_basketball_outlined,
+              size: 50,
+              color: Colors.orange.shade300,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Bouncing Ball Animation')),
-      body: Center(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Ground line
-            Positioned(
-              bottom: 50,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 2,
-                color: Colors.grey[300],
-              ),
-            ),
-            // Bouncing ball
-            Positioned(
-              bottom: 50 + bounceProgress, // Move up to 200px from ground
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _bounceAnimation.start(),
-        tooltip: 'Bounce Ball',
-        child: const Icon(Icons.play_arrow),
-      ),
+      body: const BouncingBall(),
+      floatingActionButton: Builder(builder: (context) {
+        final status = _bounceAnimation.status.watch(context);
+        final (icon, onPressed) = switch (status) {
+          ProgressStatus.running => (Icons.pause, _bounceAnimation.pause),
+          ProgressStatus.paused => (Icons.play_arrow, _bounceAnimation.resume),
+          ProgressStatus.stopped => (Icons.play_arrow, _bounceAnimation.start),
+        };
+        return FloatingActionButton(
+          onPressed: onPressed,
+          tooltip: 'Bounce Ball',
+          child: Icon(icon),
+        );
+      }),
     );
   }
-}
-
-class AnimationDemoApp extends StatelessWidget {
-  const AnimationDemoApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'State Beacon Animation Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const _HomePage(),
-    );
-  }
-}
-
-class _HomePage extends StatelessWidget {
-  const _HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Animation Example')),
-      body: const BouncingBallView(),
-    );
-  }
-}
-
-void main() {
-  runApp(const LiteRefScope(child: AnimationDemoApp()));
 }

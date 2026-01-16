@@ -2,6 +2,18 @@
 
 part of '../producer.dart';
 
+/// The status of a [ProgressBeacon].
+enum ProgressStatus {
+  /// The beacon is currently emitting values.
+  running,
+
+  /// The beacon has been paused.
+  paused,
+
+  /// The beacon has been stopped or has completed.
+  stopped,
+}
+
 /// A beacon that emits values periodically with progress information.
 ///
 /// The progress is calculated as the ratio of elapsed time to [totalDuration].
@@ -52,6 +64,12 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     }
   }
 
+  /// The current status of the beacon.
+  late final status = Beacon.writable(
+    onStart != null ? ProgressStatus.stopped : ProgressStatus.running,
+    name: "$name's status",
+  );
+
   /// The interval at which values are emitted.
   final Duration interval;
 
@@ -88,6 +106,8 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
 
     // Reset elapsed time for a fresh start.
     _elapsed = Duration.zero;
+
+    status.value = ProgressStatus.running;
 
     if (onStart != null) {
       _setValue(onStart!.call());
@@ -126,13 +146,24 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     _subscription?.cancel();
     _subscription = null;
     _elapsed = Duration.zero;
+    status.value = ProgressStatus.stopped;
   }
 
   /// Pauses emission of values.
-  void pause() => _subscription?.pause();
+  void pause() {
+    if (_subscription != null) {
+      _subscription!.pause();
+      status.value = ProgressStatus.paused;
+    }
+  }
 
   /// Resumes emission of values.
-  void resume() => _subscription?.resume();
+  void resume() {
+    if (_subscription != null) {
+      _subscription!.resume();
+      status.value = ProgressStatus.running;
+    }
+  }
 
   double _computeProgress() {
     if (totalDuration.inMicroseconds == 0) {
@@ -145,6 +176,7 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   @override
   void dispose() {
     stop();
+    status.dispose();
     super.dispose();
   }
 }

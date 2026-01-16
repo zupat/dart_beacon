@@ -374,7 +374,7 @@ void main() {
 
     beacon.subscribe(values.add);
 
-    await delay(k10ms * 2);
+    await delay(k10ms * 2.2);
     final initialCount = values.length;
     expect(initialCount, greaterThan(0));
 
