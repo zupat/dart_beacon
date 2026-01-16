@@ -8,12 +8,14 @@ const _kBounceInterval = Duration(milliseconds: 16); // ~60fps
 final _bounceAnimation = Beacon.progress(
   interval: _kBounceInterval,
   totalDuration: _kBounceDuration,
-  manualStart: true,
+  loop: true,
   initialValue: 0.0,
-  onProgress: (progress) {
-    // Create a bouncing effect using a sine wave
-    // The ball goes up and down in a parabolic motion
-    return (1.0 - progress * progress) * 200;
+  onStart: () => 0.0,
+  onProgress: (p) {
+    // Parabolic bounce: 0 -> 1 -> 0
+    // h = 4 * max_height * p * (1 - p)
+    // max_height = 200
+    return 800 * p * (1 - p);
   },
 );
 
@@ -41,8 +43,7 @@ class BouncingBallView extends StatelessWidget {
               ),
             ),
             // Bouncing ball
-            AnimatedPositioned(
-              duration: _kBounceDuration * 0.5,
+            Positioned(
               bottom: 50 + bounceProgress, // Move up to 200px from ground
               child: Container(
                 width: 50,
