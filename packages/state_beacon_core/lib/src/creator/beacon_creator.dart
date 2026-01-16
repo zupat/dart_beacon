@@ -511,32 +511,41 @@ class _BeaconCreator {
   /// The [totalDuration] specifies how long the beacon will emit values.
   /// Progress is calculated as elapsed time divided by total duration.
   ///
+  /// [interval] is the duration between updates.
+  /// [onProgress] is a callback that returns the value based on the progress.
+  /// [onDone] is a callback that returns the final value when progress reaches 1.0.
+  /// [onStart] is a callback that returns the initial value when the beacon starts.
+  ///
   /// Example:
   /// ```dart
   /// final myBeacon = Beacon.progress(
-  ///   Duration(milliseconds: 16),
-  ///   (progress) => progress,
+  ///   interval: Duration(milliseconds: 100),
   ///   totalDuration: Duration(seconds: 1),
+  ///   onProgress: (progress) => progress,
+  ///   onDone: () => 1.0,
   /// );
   /// ```
   ///
-  /// If [manualStart] is `true`, the beacon will not start emitting values
-  /// until `start()` is called. In that case, [initialValue] must be
-  /// provided so the beacon has a well-defined value before it starts.
+  /// If [onStart] is provided, the beacon will not start emitting values
+  /// until `start()` is called. In that case, [initialValue] must be provided.
+  ///
+  /// If [onProgress] is not provided, then [onDone] must be provided.
   ProgressBeacon<T> progress<T>({
     required Duration interval,
-    required T Function(double) onProgress,
     required Duration totalDuration,
+    T Function(double)? onProgress,
+    T Function()? onDone,
     String? name,
-    bool manualStart = false,
+    T Function()? onStart,
     T? initialValue,
   }) =>
       ProgressBeacon<T>(
         interval: interval,
         onProgress: onProgress,
+        onDone: onDone,
         name: name,
         totalDuration: totalDuration,
-        manualStart: manualStart,
+        onStart: onStart,
         initialValue: initialValue,
       );
 

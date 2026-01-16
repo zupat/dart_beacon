@@ -65,13 +65,12 @@ void main() {
     myBeacon.dispose();
   });
 
-  test('manualStart uses provided initialValue and does not auto-start',
-      () async {
+  test('onStart uses provided initialValue and does not auto-start', () async {
     final myBeacon = Beacon.progress<double>(
       interval: k10ms,
       onProgress: (progress) => progress,
       totalDuration: k10ms * 3,
-      manualStart: true,
+      onStart: () => 0.0,
       initialValue: 0,
     );
 
@@ -81,6 +80,24 @@ void main() {
 
     // Still initial value because start() has not been called.
     expect(myBeacon.peek(), 0.0);
+
+    myBeacon.dispose();
+  });
+
+  test('onStart value is used when start() is called', () async {
+    final myBeacon = Beacon.progress<double>(
+      interval: k10ms,
+      onProgress: (progress) => progress,
+      totalDuration: k10ms * 3,
+      onStart: () => 0.5,
+      initialValue: 0,
+    );
+
+    expect(myBeacon.peek(), 0.0);
+
+    myBeacon.start();
+
+    expect(myBeacon.peek(), 0.5);
 
     myBeacon.dispose();
   });
@@ -133,14 +150,14 @@ void main() {
   });
 
   test(
-      'should throw assertion error if manualStart is true and'
+      'should throw assertion error if onStart is provided and'
       ' initialValue is not provided', () {
     expect(
       () => Beacon.progress<double>(
         interval: k10ms,
         onProgress: (progress) => progress,
         totalDuration: k10ms * 3,
-        manualStart: true,
+        onStart: () => 0.0,
         // initialValue is missing
       ),
       throwsAssertionError,
@@ -226,7 +243,7 @@ void main() {
       interval: k10ms,
       onProgress: (progress) => progress,
       totalDuration: k10ms * 3,
-      manualStart: true,
+      onStart: () => 0.0,
       initialValue: 0,
     );
 
@@ -270,6 +287,49 @@ void main() {
     // Should not exceed 1.0 even after more time
     await delay(k10ms * 5);
     expect(beacon.peek(), equals(1.0));
+
+    beacon.dispose();
+  });
+
+  test('should call onDone when progress reaches 1.0', () async {
+    var doneCalled = false;
+    final beacon = Beacon.progress<double>(
+      interval: k10ms,
+      onProgress: (progress) => progress,
+      totalDuration: k10ms * 3,
+      onDone: () {
+        doneCalled = true;
+        return 1.0;
+      },
+    );
+
+    await delay(k10ms * 5);
+
+    expect(beacon.peek(), equals(1.0));
+    expect(doneCalled, isTrue);
+
+    beacon.dispose();
+  });
+
+  test('should work with optional onProgress', () async {
+    var doneCalled = false;
+    final beacon = Beacon.progress<double>(
+      interval: k10ms,
+      totalDuration: k10ms * 3,
+      onDone: () {
+        doneCalled = true;
+        return 1.0;
+      },
+      initialValue: 0,
+    );
+
+    expect(beacon.peek(), 0.0);
+
+    await delay(k10ms * 5);
+
+    // Value should not have changed because onProgress was not provided.
+    expect(beacon.peek(), 0.0);
+    expect(doneCalled, isTrue);
 
     beacon.dispose();
   });
