@@ -34,7 +34,7 @@ class _CurrencySelector extends StatelessWidget {
 
           return AnimatedSlide(
             offset: Offset(offset, 0),
-            duration: const Duration(milliseconds: 300),
+            duration: _kSlideDuration,
             curve: Curves.fastOutSlowIn,
             child: Text(
               '$current ▽',
