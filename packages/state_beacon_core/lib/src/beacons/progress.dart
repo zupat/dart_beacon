@@ -26,6 +26,7 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     this.onProgress,
     this.onDone,
     this.onStart,
+    this.loop = false,
     super.initialValue,
     super.name,
   })  : assert(
@@ -48,6 +49,9 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
 
   /// The interval at which values are emitted.
   final Duration interval;
+
+  /// Whether to restart the progress when it's done.
+  final bool loop;
 
   /// The function that computes the value based on progress.
   final T Function(double progress)? onProgress;
@@ -100,7 +104,14 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
         if (onDone != null) {
           _setValue(onDone!.call());
         }
-        stop();
+
+        if (loop) {
+          // Restart in the next microtask to allow listeners to
+          // process the 1.0 value.
+          Future.delayed(interval, start);
+        } else {
+          stop();
+        }
       }
     });
   }

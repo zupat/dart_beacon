@@ -370,4 +370,36 @@ void main() {
     // Should not have emitted any new values after dispose
     expect(values.length, equals(initialCount));
   });
+
+  test('should restart progress when loop is true', () async {
+    final values = <double>[];
+    final beacon = Beacon.progress<double>(
+      interval: k10ms,
+      onProgress: (progress) => progress,
+      totalDuration: k10ms * 3,
+      loop: true,
+    );
+
+    beacon.subscribe(values.add);
+
+    // duration 30ms.
+    // 0ms: 0.0
+    // 10ms: 0.33
+    // 20ms: 0.66
+    // 30ms: 1.0 -> restart -> 0.0
+    // 40ms: 0.33
+
+    await delay(k10ms * 5); // 50ms
+
+    // Should contain 1.0 followed by 0.0
+    expect(values, contains(1.0));
+
+    // Find index of 1.0
+    final index = values.indexOf(1.0);
+    expect(index, isNot(-1));
+    expect(values.length, greaterThan(index + 1));
+    expect(values[index + 1], equals(0.0));
+
+    beacon.dispose();
+  });
 }

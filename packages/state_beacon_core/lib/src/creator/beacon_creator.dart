@@ -515,6 +515,7 @@ class _BeaconCreator {
   /// [onProgress] is a callback that returns the value based on the progress.
   /// [onDone] is a callback that returns the final value when progress reaches 1.0.
   /// [onStart] is a callback that returns the initial value when the beacon starts.
+  /// [loop] is whether to restart the progress when it's done.
   ///
   /// Example:
   /// ```dart
@@ -538,6 +539,7 @@ class _BeaconCreator {
     String? name,
     T Function()? onStart,
     T? initialValue,
+    bool loop = false,
   }) =>
       ProgressBeacon<T>(
         interval: interval,
@@ -547,6 +549,7 @@ class _BeaconCreator {
         totalDuration: totalDuration,
         onStart: onStart,
         initialValue: initialValue,
+        loop: loop,
       );
 
   /// Creates an effect based on a provided function. The provided function will be called

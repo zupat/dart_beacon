@@ -386,6 +386,7 @@ class BeaconGroup extends _BeaconCreator {
     String? name,
     T Function()? onStart,
     T? initialValue,
+    bool loop = false,
   }) {
     final beacon = super.progress<T>(
       interval: interval,
@@ -395,6 +396,7 @@ class BeaconGroup extends _BeaconCreator {
       totalDuration: totalDuration,
       onStart: onStart,
       initialValue: initialValue,
+      loop: loop,
     );
     add(beacon);
     return beacon;
