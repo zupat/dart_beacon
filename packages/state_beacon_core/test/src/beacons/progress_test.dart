@@ -311,6 +311,21 @@ void main() {
     beacon.dispose();
   });
 
+  test(
+      'should throw assertion error if onProgress and onDone are both missing',
+      () {
+    expect(
+      () => Beacon.progress<double>(
+        interval: k10ms,
+        // onProgress is missing
+        // onDone is missing
+        totalDuration: k10ms * 3,
+        initialValue: 0,
+      ),
+      throwsAssertionError,
+    );
+  });
+
   test('should work with optional onProgress', () async {
     var doneCalled = false;
     final beacon = Beacon.progress<double>(
@@ -327,8 +342,8 @@ void main() {
 
     await delay(k10ms * 5);
 
-    // Value should not have changed because onProgress was not provided.
-    expect(beacon.peek(), 0.0);
+    // Value should be 1.0 because onDone returned 1.0
+    expect(beacon.peek(), 1.0);
     expect(doneCalled, isTrue);
 
     beacon.dispose();
