@@ -94,6 +94,7 @@ class FutureCounter extends StatelessWidget {
 -   [Beacon.filtered](#beaconfiltered): Update values based on filter criteria.
 -   [Beacon.timestamped](#beacontimestamped): Attach timestamps to each value update.
 -   [Beacon.undoRedo](#beaconundoredo): Provides the ability to undo and redo value changes.
+-   [Beacon.progress](#beaconprogress): Emits values periodically based on progress.
 -   [Beacon.bufferedCount](#beaconbufferedcount): Create a buffer/list of values based an `int` limit.
 -   [Beacon.bufferedTime](#beaconbufferedtime): Create a buffer/list of values based on a time limit.
 -   [Beacon.list](#beaconlist): Manage reactive lists that automatically update dependent beacons upon changes.
@@ -617,6 +618,38 @@ age.value = 20;
 
 age.undo(); // Reverts to 10
 age.redo(); // Goes back to 20
+```
+
+### Beacon.progress:
+
+Creates a `ProgressBeacon` that emits values periodically based on progress (0.0 to 1.0).
+This beacon is useful for creating progress bars, timers, or animations.
+
+The `onProgress` callback receives the current progress (0.0 to 1.0) and returns the value to be emitted.
+If `loop` is true, the progress will reset to 0.0 after reaching 1.0 and continue.
+
+```dart
+final progressBar = Beacon.progress(
+  interval: Duration(milliseconds: 100),
+  totalDuration: Duration(seconds: 5),
+  onProgress: (p) => p,
+);
+
+progressBar.subscribe((val) {
+  print('${val * 100}%');
+});
+```
+
+You can control the execution with `start()`, `pause()`, `resume()`, and `stop()`.
+
+```dart
+progressBar.pause();
+// ...
+progressBar.resume();
+// ...
+progressBar.start(); // restarts progress from 0.0
+// ...
+progressBar.stop(); // stops the progress and resets elapsed time
 ```
 
 ### Beacon.bufferedCount:
