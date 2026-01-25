@@ -10,6 +10,8 @@ class TodoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final textStyle = theme.textTheme.bodyLarge;
+
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
@@ -24,14 +26,12 @@ class TodoItem extends StatelessWidget {
         title: Text(
           todo.title,
           style: todo.completed
-              ? TextStyle(
+              ? textStyle?.copyWith(
                   decoration: TextDecoration.lineThrough,
                   color: theme.disabledColor,
-                  fontSize: 16,
                 )
-              : const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
+              : textStyle?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
         ),
         trailing: IconButton(
@@ -86,14 +86,16 @@ class TodoListPage extends StatelessWidget {
     final todosRaw = controller.todosRaw.watch(context);
     final todos = controller.todos.watch(context);
     final currentFilter = controller.currentFilter.watch(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text('State Beacon CRUD'),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        backgroundColor: theme.colorScheme.primaryContainer,
+        foregroundColor: theme.colorScheme.onPrimaryContainer,
         actions: [
           PopupMenuButton<TodoFilter>(
             initialValue: currentFilter,
@@ -118,10 +120,10 @@ class TodoListPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.error_outline,
-                        size: 48, color: Theme.of(context).colorScheme.error),
+                        size: 48, color: theme.colorScheme.error),
                     const SizedBox(height: 16),
                     Text('Error: $error',
-                        style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                        style: TextStyle(color: theme.colorScheme.error)),
                   ],
                 ),
               ),
@@ -135,12 +137,15 @@ class TodoListPage extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.assignment_turned_in_outlined,
-                                    size: 64, color: Colors.grey[400]),
+                                    size: 64,
+                                    color: theme.colorScheme.onSurfaceVariant
+                                        .withValues(alpha: 0.5)),
                                 const SizedBox(height: 16),
                                 Text(
                                   'No todos found',
-                                  style: TextStyle(
-                                      fontSize: 18, color: Colors.grey[600]),
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                               ],
                             ),
