@@ -1,16 +1,74 @@
-# crud
+# State Beacon CRUD
 
-A new Flutter project.
+A Todo application demonstrating robust async state management using `state_beacon`.
 
-## Getting Started
+## Project Structure
 
-This project is a starting point for a Flutter application.
+```
+lib/
+├── main.dart       # App entry point with LiteRefScope
+├── deps.dart       # Dependency injection setup
+├── controller.dart # Business logic with beacons
+├── service.dart    # Mock backend service
+├── model.dart      # Todo and Filter models
+└── view.dart       # UI implementation
+```
 
-A few resources to get you started if this is your first Flutter project:
+## How Beacons Are Used
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+This example showcases how to handle async data and filtering.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### 1. Async Data (`todosRaw`)
+
+```dart
+late final todosRaw = B.future(service.getTodos);
+```
+- Fetches initial data automatically.
+- Acts as the source of truth for the raw list of todos.
+- Updated via `updateWith`.
+
+### 2. Derived State (`todos`)
+
+```dart
+late final todos = B.derived(
+  () => switch (currentFilter.value) {
+    TodoFilter.all => currentTodos,
+    TodoFilter.active => currentTodos.where((t) => !t.completed).toList(),
+    TodoFilter.completed => currentTodos.where((t) => t.completed).toList(),
+  },
+);
+```
+- Automatically recomputes whenever `todosRaw` or `currentFilter` changes.
+- Ensures the UI always displays the correct subset of data without manual synchronization.
+
+### 3. Ephemeral State (`deletingItems`)
+
+```dart
+late final deletingItems = B.family((int id) => B.writable(false));
+```
+- A `family` of beacons creates a separate state for each todo item.
+- Used to grey out/disable items during deletion.
+- Demonstrates how to manage granular state without rebuilding the entire list.
+
+### 4. Async Actions
+
+The controller methods demonstrate how to perform async operations and update the state:
+
+```dart
+Future<void> addTodo(String title) async {
+  await todosRaw.updateWith(() async {
+    final todo = await service.createTodo(title);
+    return [...currentTodos, todo];
+  });
+}
+```
+- `updateWith` puts the beacon in a loading state (optional) and then updates it with the result of the callback.
+- Errors are automatically captured by the beacon.
+
+## Features
+
+- **Create**: Add new todos.
+- **Read**: View todos with filtering (All, Active, Completed).
+- **Update**: Toggle completion status or edit the title.
+- **Delete**: Remove todos with a specific loading state.
+- **Async Updates**: UI reflects changes based on the beacon's state lifecycle.
