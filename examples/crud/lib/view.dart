@@ -135,38 +135,42 @@ class TodoListPage extends StatelessWidget {
                   ],
                 ),
               ),
-            _ => Column(
+            _ => Stack(
                 children: [
-                  if (todosRaw.isLoading) const LinearProgressIndicator(),
-                  Expanded(
-                    child: todos.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.assignment_turned_in_outlined,
-                                    size: 64,
-                                    color: theme.colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.5)),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No todos found',
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
+                  todos.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.assignment_turned_in_outlined,
+                                  size: 64,
+                                  color: theme.colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.5)),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No todos found',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: todos.length,
-                            itemBuilder: (context, index) {
-                              final todo = todos[index];
-                              return TodoItem(todo);
-                            },
+                              ),
+                            ],
                           ),
-                  ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: todos.length,
+                          itemBuilder: (context, index) {
+                            final todo = todos[index];
+                            return TodoItem(todo);
+                          },
+                        ),
+                  if (todosRaw.isLoading)
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: LinearProgressIndicator(),
+                    ),
                 ],
               ),
           };
