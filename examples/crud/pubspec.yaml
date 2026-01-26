@@ -1,5 +1,5 @@
-name: animation
-description: Showcasing how to drive animations with state_beacon
+name: crud
+description: Showcasing how to drive crud with state_beacon
 version: 1.0.0+1
 publish_to: none
 
