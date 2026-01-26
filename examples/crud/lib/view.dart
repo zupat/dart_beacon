@@ -11,17 +11,21 @@ class TodoItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textStyle = theme.textTheme.bodyLarge;
+    final controller = controllerRef.of(context);
+    final deleting = controller.deletingItems(todo.id).watch(context);
 
     return Card(
-      elevation: 2,
+      color: deleting ? theme.colorScheme.surfaceContainerHighest : null,
+      elevation: deleting ? 0 : 2,
       margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
+        enabled: !deleting,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Checkbox(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           value: todo.completed,
-          onChanged: (_) => controllerRef.read(context).toggleTodo(todo.id),
+          onChanged: deleting ? null : (_) => controller.toggleTodo(todo.id),
         ),
         title: Text(
           todo.title,
@@ -35,8 +39,11 @@ class TodoItem extends StatelessWidget {
                 ),
         ),
         trailing: IconButton(
-          icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-          onPressed: () => controllerRef.read(context).deleteTodo(todo.id),
+          icon: Icon(
+            Icons.delete_outline,
+            color: deleting ? theme.disabledColor : theme.colorScheme.error,
+          ),
+          onPressed: deleting ? null : () => controller.deleteTodo(todo.id),
         ),
         onTap: () async {
           final textController = TextEditingController(text: todo.title);
@@ -60,9 +67,10 @@ class TodoItem extends StatelessWidget {
                 FilledButton(
                   onPressed: () {
                     if (textController.text.isNotEmpty) {
-                      controllerRef
-                          .read(context)
-                          .updateTodo(todo.id, title: textController.text);
+                      controller.updateTodo(
+                        todo.id,
+                        title: textController.text,
+                      );
                       Navigator.pop(context);
                     }
                   },

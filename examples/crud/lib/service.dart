@@ -8,7 +8,7 @@ class TodoService {
   final todos = LinkedHashMap<int, Todo>();
   var _nextID = 1;
 
-  Future<void> _delay() => Future.delayed(const Duration(milliseconds: 1500));
+  Future<void> _delay() => Future.delayed(const Duration(milliseconds: 1000));
 
   Future<List<Todo>> getTodos() async {
     return todos.values.toList();

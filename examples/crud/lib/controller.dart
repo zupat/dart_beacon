@@ -20,6 +20,9 @@ class TodoController with BeaconController {
     },
   );
 
+  // thi is used to grey out the Delete button of an item while it is being deleted
+  late final deletingItems = B.family((int id) => B.writable(false));
+
   Future<void> addTodo(String title) async {
     await todosRaw.updateWith(() async {
       final todo = await service.createTodo(title);
@@ -39,10 +42,12 @@ class TodoController with BeaconController {
   }
 
   Future<void> deleteTodo(int id) async {
+    deletingItems(id).value = true;
     await todosRaw.updateWith(() async {
       await service.deleteTodo(id);
       return currentTodos.where((todo) => todo.id != id).toList();
     });
+    deletingItems(id).value = false;
   }
 
   Future<void> toggleTodo(int id) async {
