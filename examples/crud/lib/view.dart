@@ -49,35 +49,72 @@ class TodoItem extends StatelessWidget {
           final textController = TextEditingController(text: todo.title);
           await showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Edit Todo'),
-              content: TextField(
-                controller: textController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Enter todo title',
-                  border: OutlineInputBorder(),
+            barrierDismissible: false,
+            builder: (context) {
+              final isLoading = controller.todosRaw.watch(context).isLoading;
+              return AlertDialog(
+                title: const Text('Edit Todo'),
+                content: TextField(
+                  controller: textController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter todo title',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    if (textController.text.isNotEmpty) {
-                      controller.updateTodo(
-                        todo.id,
-                        title: textController.text,
-                      );
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            ),
+                actions: isLoading
+                    ? [
+                        TextButton(
+                          onPressed: null,
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.disabledColor,
+                            fixedSize: const Size(80, 40),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: null,
+                          style: FilledButton.styleFrom(
+                            fixedSize: const Size(80, 40),
+                          ),
+                          child: const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ]
+                    : [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            fixedSize: const Size(80, 40),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () async {
+                            if (textController.text.isNotEmpty) {
+                              controller.updateTodo(
+                                todo.id,
+                                title: textController.text,
+                              );
+                              final next = await controller.todosRaw.next(
+                                filter: (val) => !val.isLoading,
+                              );
+                              if (context.mounted && next.isData) {
+                                Navigator.pop(context);
+                              }
+                            }
+                          },
+                          style: FilledButton.styleFrom(
+                            fixedSize: const Size(80, 40),
+                          ),
+                          child: const Text('Save'),
+                        ),
+                      ],
+              );
+            },
           );
         },
       ),
@@ -120,6 +157,19 @@ class TodoListPage extends StatelessWidget {
       ),
       body: Builder(
         builder: (context) {
+          controller.todosRaw.observe(context, (prev, next) {
+            if (next case AsyncError(:final error)) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: $error'),
+                  backgroundColor: theme.colorScheme.error,
+                ),
+              );
+            } else if (next.isData) {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            }
+          });
+
           return switch (todosRaw) {
             AsyncLoading() when todos.isEmpty =>
               const Center(child: CircularProgressIndicator()),
