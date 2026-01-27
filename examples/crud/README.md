@@ -2,6 +2,10 @@
 
 A Todo application demonstrating robust async state management using `state_beacon`.
 
+<div align='center'>
+    <video src='https://github.com/user-attachments/assets/ef1a6525-e627-47fc-9344-fe4e48a87c33' />
+</div>
+
 ## Project Structure
 
 ```
