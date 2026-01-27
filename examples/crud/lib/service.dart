@@ -7,6 +7,7 @@ import 'package:crud/model.dart';
 class TodoService {
   final todos = LinkedHashMap<int, Todo>();
   var _nextID = 1;
+  var _shouldFail = true;
 
   Future<void> _delay() => Future.delayed(const Duration(milliseconds: 1000));
 
@@ -27,6 +28,12 @@ class TodoService {
 
   Future<void> updateTodo(int id, {String? title, bool? completed}) async {
     await _delay();
+
+    if (_shouldFail) {
+      _shouldFail = false;
+      throw Exception('Fake Error');
+    }
+
     final todo = todos[id];
 
     if (todo == null) throw Exception('Todo with id $id not found');

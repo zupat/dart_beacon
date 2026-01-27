@@ -120,6 +120,17 @@ class TodoListPage extends StatelessWidget {
       ),
       body: Builder(
         builder: (context) {
+          controller.todosRaw.observe(context, (prev, next) {
+            if (next case AsyncError(:final error)) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: $error'),
+                  backgroundColor: theme.colorScheme.error,
+                ),
+              );
+            }
+          });
+
           return switch (todosRaw) {
             AsyncLoading() when todos.isEmpty =>
               const Center(child: CircularProgressIndicator()),
