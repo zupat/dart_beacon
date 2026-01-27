@@ -32,6 +32,9 @@ class TodoService {
     if (_shouldFail) {
       _shouldFail = false;
       throw Exception('Fake Error');
+    } else {
+      // fail next time
+      _shouldFail = true;
     }
 
     final todo = todos[id];
@@ -49,6 +52,14 @@ class TodoService {
 
   Future<void> deleteTodo(int id) async {
     await _delay();
+    if (_shouldFail) {
+      _shouldFail = false;
+      throw Exception('Fake Error');
+    } else {
+      // fail next time
+      _shouldFail = true;
+    }
+
     if (todos.remove(id) == null) {
       throw Exception('Todo with id $id not found');
     }
