@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:state_beacon/state_beacon.dart';
 
 class MockTodoService implements TodoService {
+  // ignore: prefer_collection_literals
   final _todos = LinkedHashMap<int, Todo>();
   int _nextId = 1;
 
@@ -52,7 +53,7 @@ class MockTodoService implements TodoService {
       );
     }
   }
-  
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -96,7 +97,7 @@ void main() {
 
       // Check dialog
       expect(find.text('Add Todo'), findsNWidgets(2)); // FAB + Dialog title
-      
+
       // Enter text
       await tester.enterText(find.byType(TextField), 'Buy milk');
       await tester.tap(find.text('Add'));
@@ -113,7 +114,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Buy milk'), findsOneWidget);
-      
+
       // Find checkbox
       final checkboxFinder = find.byType(Checkbox);
       final checkbox = tester.widget<Checkbox>(checkboxFinder);
@@ -126,7 +127,7 @@ void main() {
       // Verify checked
       final checkboxChecked = tester.widget<Checkbox>(checkboxFinder);
       expect(checkboxChecked.value, true);
-      
+
       // Verify strikethrough style
       final textWidget = tester.widget<Text>(find.text('Buy milk'));
       expect(textWidget.style?.decoration, TextDecoration.lineThrough);
@@ -158,7 +159,8 @@ void main() {
 
       // Check dialog
       expect(find.text('Edit Todo'), findsOneWidget);
-      expect(find.text('Buy milk'), findsNWidgets(2)); // List item + Dialog text field
+      expect(find.text('Buy milk'),
+          findsNWidgets(2)); // List item + Dialog text field
 
       // Edit text
       await tester.enterText(find.byType(TextField), 'Buy almond milk');
@@ -171,7 +173,7 @@ void main() {
     testWidgets('can filter todos', (tester) async {
       await service.createTodo('Task 1'); // Active
       await service.createTodo('Task 2', completed: true); // Completed
-      
+
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
