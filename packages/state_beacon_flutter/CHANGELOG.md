@@ -1,3 +1,9 @@
+# 3.1.0
+
+- [Feat] Add `ProgressBeacon` (`Beacon.progress`) with support for status tracking (`ProgressStatus`), manual control (`start`/`stop`/`pause`/`resume`), looping, and `BeaconGroup` integration.
+
+- [Refactor] Internal improvements for `DerivedSubscription` and `DerivedBeacon` status propagation.
+
 # 3.0.1
 
 - [Fix] Bug where subscriptions to derived beacons with startNow=false would not run when the beacon was accessed after the subscription was created but before the next value was emitted.

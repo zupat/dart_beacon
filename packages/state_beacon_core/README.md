@@ -94,6 +94,7 @@ class FutureCounter extends StatelessWidget {
 -   [Beacon.filtered](#beaconfiltered): Update values based on filter criteria.
 -   [Beacon.timestamped](#beacontimestamped): Attach timestamps to each value update.
 -   [Beacon.undoRedo](#beaconundoredo): Provides the ability to undo and redo value changes.
+-   [Beacon.progress](#beaconprogress): Emits values periodically based on progress.
 -   [Beacon.bufferedCount](#beaconbufferedcount): Create a buffer/list of values based an `int` limit.
 -   [Beacon.bufferedTime](#beaconbufferedtime): Create a buffer/list of values based on a time limit.
 -   [Beacon.list](#beaconlist): Manage reactive lists that automatically update dependent beacons upon changes.
@@ -619,6 +620,38 @@ age.undo(); // Reverts to 10
 age.redo(); // Goes back to 20
 ```
 
+### Beacon.progress:
+
+Creates a `ProgressBeacon` that emits values periodically based on progress (0.0 to 1.0).
+This beacon is useful for creating progress bars, timers, or animations.
+
+The `onProgress` callback receives the current progress (0.0 to 1.0) and returns the value to be emitted.
+If `loop` is true, the progress will reset to 0.0 after reaching 1.0 and continue.
+
+```dart
+final progressBar = Beacon.progress(
+  interval: Duration(milliseconds: 100),
+  totalDuration: Duration(seconds: 5),
+  onProgress: (p) => p,
+);
+
+progressBar.subscribe((val) {
+  print('${val * 100}%');
+});
+```
+
+You can control the execution with `start()`, `pause()`, `resume()`, and `stop()`.
+
+```dart
+progressBar.pause();
+// ...
+progressBar.resume();
+// ...
+progressBar.start(); // restarts progress from 0.0
+// ...
+progressBar.stop(); // stops the progress and resets elapsed time
+```
+
 ### Beacon.bufferedCount:
 
 Creates a `BufferedCountBeacon` that collects and buffers a specified number
@@ -992,32 +1025,8 @@ Seamlessly chain beacons to create sophisticated reactive pipelines, combining m
 
 ```dart
 // every write to this beacon will be filtered then debounced.
-final searchQuery = Beacon.writable('').filter((prev, next) => next.length > 2).debounce(duration: k500ms);
-```
-
-> [!IMPORTANT]  
-> When chaining beacons, all writes made to the returned beacon will be re-routed to the first writable beacon in the chain. It is recommended to mutate the source beacons directly.
-
-```dart
-const k500ms = Duration(milliseconds: 500);
-
-final count = Beacon.writable(10);
-
-final filteredCount = count
-        .debounce(duration: k500ms),
-        .filter((prev, next) => next > 10);
-
-filteredCount.value = 20;
-// The mutation will be re-routed to count
-// before being passed to the debounced beacon
-// then to the filtered beacon.
-// This is equivalent to count.value = 20;
-
-expect(count.value, equals(20));
-
-await Future.delayed(k500ms);
-
-expect(filteredCount.value, equals(20));
+final searchQueryText = Beacon.writable('');
+final searchQuery = searchQueryText.filter((prev, next) => next.length > 2).debounce(duration: k500ms);
 ```
 
 > [!WARNING]  
@@ -1247,9 +1256,48 @@ final count = Beacon.writable(10);
 
 final stream = count.stream;
 
-Future.delayed(Duration(milliseconds: 1), () => count.value = 20);
+Future.delayed(Duration(milliseconds: 1), () {
+  count.value = 20;
+  BeaconScheduler.flush();
+});
 
-expect(stream, emitsInOrder([10, 20]));
+Future.delayed(Duration(milliseconds: 1), () => count.value = 30);
+
+expect(stream, emitsInOrder([10, 20, 30]));
+```
+
+or
+
+```dart
+final count = Beacon.writable(10);
+
+expect(count.stream, emitsInOrder([10, 20, 30]));
+
+BeaconScheduler.flush(); // allow stream to pick up the 10
+
+count.value = 20;
+BeaconScheduler.flush();
+
+count.value = 30;
+BeaconScheduler.flush();
+```
+
+or
+
+```dart
+final count = Beacon.writable(10);
+
+final stream = count.stream;
+
+await expectLater(stream, emits(10));
+
+count.value = 20;
+
+await expectLater(stream, emits(20));
+
+count.value = 30;
+
+await expectLater(stream, emits(30));
 ```
 
 ### Testing beacons with chaining methods
@@ -1261,11 +1309,52 @@ expect(stream, emitsInOrder([10, 20]));
 ```dart
 final count = Beacon.writable(10);
 
-final buff = count.buffer(2);
+final buff = count.buffer(3);
+
+BeaconScheduler.flush(); // allow buffer to read first value
 
 count.value = 20;
+BeaconScheduler.flush();
 
-expect(buff.value, equals([10, 20]));
+count.value = 30;
+BeaconScheduler.flush();
+
+expect(buff.value, equals([10, 20, 30]));
+```
+
+or
+
+```dart
+final count = Beacon.writable(10);
+
+final buff = count.buffer(3);
+
+await Future.delayed(Duration(milliseconds: 1)); // allow buffer to read first value
+
+count.value = 20;
+await Future.delayed(Duration(milliseconds: 1));
+
+count.value = 30;
+
+expect(await buff.next(), equals([10, 20, 30]));
+```
+
+or
+
+```dart
+final count = Beacon.writable(10);
+
+final buff = count.buffer(3);
+
+await Future.delayed(Duration(milliseconds: 1)); // allow buffer to read first value
+
+count.value = 20;
+await Future.delayed(Duration(milliseconds: 1));
+
+count.value = 30;
+await Future.delayed(Duration(milliseconds: 1));
+
+expect(buff.value, equals([10, 20, 30]));
 ```
 
 ##### anyBeacon.next()
