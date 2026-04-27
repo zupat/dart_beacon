@@ -27,6 +27,7 @@ void main() {
     final beacon = Beacon.writable('initial');
     final controller1 = beacon.getTextEditingController();
 
+    // ignore: cascade_invocations
     controller1.dispose();
 
     final controller2 = beacon.getTextEditingController();
