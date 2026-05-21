@@ -1,3 +1,7 @@
+# 3.1.1
+
+- [Feat] Add `asError` getter to the `AsyncValue`. This allows users to easily retrieve the `AsyncError` instance when the state is an error, or null otherwise.
+ 
 # 3.1.0
 
 - [Feat] Add `ProgressBeacon` (`Beacon.progress`) with support for status tracking (`ProgressStatus`), manual control (`start`/`stop`/`pause`/`resume`), looping, and `BeaconGroup` integration.
