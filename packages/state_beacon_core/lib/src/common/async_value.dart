@@ -51,6 +51,10 @@ sealed class AsyncValue<T> {
   /// Returns `true` if this is [AsyncError].
   bool get isError => false;
 
+  /// Returns the [AsyncError] if this is [AsyncError].
+  /// Otherwise returns `null`.
+  AsyncError<T>? get asError => null;
+
   /// Executes the future provided and returns [AsyncData] with the result
   /// if successful or [AsyncError] if an exception is thrown.
   ///
@@ -159,6 +163,9 @@ class AsyncError<T> extends AsyncValue<T> {
 
   @override
   bool get isError => true;
+
+  @override
+  AsyncError<T> get asError => this;
 
   @override
   bool operator ==(Object other) =>

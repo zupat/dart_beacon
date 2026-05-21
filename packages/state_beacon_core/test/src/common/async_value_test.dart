@@ -103,6 +103,20 @@ void main() {
     expect(errorResult, isA<AsyncError>());
   });
 
+  test('should return correct values for asError', () {
+    final loading = AsyncLoading();
+    expect(loading.asError, null);
+
+    final idle = AsyncIdle();
+    expect(idle.asError, null);
+
+    final error = AsyncError('error', StackTrace.current);
+    expect(error.asError, error);
+
+    final data = AsyncData(1);
+    expect(data.asError, null);
+  });
+
   test('should share the same hashCode with sister instances', () {
     final data = AsyncData(1);
     final data2 = AsyncData(1);
