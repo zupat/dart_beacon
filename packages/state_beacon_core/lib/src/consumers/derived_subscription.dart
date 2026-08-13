@@ -93,7 +93,25 @@ class DerivedSubscription<T> implements Consumer {
       //
       // mybeacon.subscribe((_){}, startNow:false);
       // mybeacon.peek();
-      if (!producer.isEmpty) return;
+      if (!producer.isEmpty) {
+        if (producer._status == CLEAN) {
+          return;
+        }
+        // A source changed between that read and this flush:
+        //
+        // mybeacon.subscribe((_){}, startNow:false);
+        // mybeacon.peek();
+        // source.value = newValue; // before the first flush
+        //
+        // Returning here would consume our DIRTY status while the
+        // producer stays DIRTY, so its stale() would never forward
+        // another notification to us and the subscription would go
+        // permanently deaf. Process the pending update instead.
+        final oldValue = producer._value;
+        final newValue = producer.peek();
+        if (newValue != oldValue) fn(newValue);
+        return;
+      }
 
       producer.peek();
       _status = CLEAN;
