@@ -8,8 +8,8 @@ class DerivedSubscription<T> implements Consumer {
     this.fn, {
     required this.startNow,
   }) {
-    _shouldRunRegardless = producer.isEmpty;
-    if (startNow || _shouldRunRegardless) {
+    _forceFirstRun = !startNow && producer.isEmpty;
+    if (startNow || _forceFirstRun) {
       _schedule();
     } else {
       // For derived beacons with startNow=false and an existing value,
@@ -24,7 +24,11 @@ class DerivedSubscription<T> implements Consumer {
     }());
   }
 
-  bool _shouldRunRegardless = false;
+  /// Whether the first scheduled run exists only to force the lazy derived
+  /// beacon to evaluate once, so that it registers itself as an observer of
+  /// its sources. Such a run must not invoke [fn] unless it would otherwise
+  /// swallow a change that landed before the flush.
+  bool _forceFirstRun = false;
 
   /// The derived beacon that this subscription is watching.
   final DerivedBeacon<T> producer;
@@ -82,47 +86,44 @@ class DerivedSubscription<T> implements Consumer {
 
   @override
   void update() {
-    if (_shouldRunRegardless && !startNow) {
-      _shouldRunRegardless = false;
-      _status = CLEAN;
+    final forcedFirstRun = _forceFirstRun;
+    _forceFirstRun = false;
 
-      // the producer got a value before this was run
-      // so we no longer need to peek() to force a value
-      // this happens when .peek() is called directly
-      // after the subscription is created.
+    // Snapshot before evaluating, since peek() may fill an empty producer.
+    // Only the forced first run needs this, so avoid touching _value
+    // on every normal update.
+    final hadValue = forcedFirstRun && !producer.isEmpty;
+    final oldValue = hadValue ? producer._value : null;
+
+    // Always evaluate the producer. This is what returns it to CLEAN, and a
+    // CLEAN producer is required for its stale() to forward any future
+    // notification to us. Skipping the evaluation here is what caused the
+    // orphan bug: we consumed our DIRTY status while the producer stayed
+    // DIRTY, so its `_status < newStatus` guard silenced it forever.
+    final newValue = producer.peek();
+
+    // Mark ourselves clean *after* evaluating (peek() re-dirties observers
+    // when it recomputes) but *before* invoking user code, so that a write
+    // performed inside fn() arrives as a fresh notification and a throwing
+    // fn() cannot leave us wedged at DIRTY.
+    _status = CLEAN;
+
+    if (forcedFirstRun) {
+      // This run exists only to force the evaluation above, so fn() is not
+      // invoked for the initial value:
       //
-      // mybeacon.subscribe((_){}, startNow:false);
+      // mybeacon.subscribe((_){}, startNow: false);
       // mybeacon.peek();
-      if (!producer.isEmpty) {
-        if (producer._status == CLEAN) {
-          return;
-        }
-        // A source changed between that read and this flush:
-        //
-        // mybeacon.subscribe((_){}, startNow:false);
-        // mybeacon.peek();
-        // source.value = newValue; // before the first flush
-        //
-        // Returning here would consume our DIRTY status while the
-        // producer stays DIRTY, so its stale() would never forward
-        // another notification to us and the subscription would go
-        // permanently deaf. Process the pending update instead.
-        final oldValue = producer._value;
-        final newValue = producer.peek();
-        if (newValue != oldValue) fn(newValue);
-        return;
-      }
-
-      producer.peek();
-      _status = CLEAN;
+      //
+      // The one exception is a source changing between that read and this
+      // flush, which is a real update that is ours to deliver:
+      //
+      // source.value = newValue; // before the first flush
+      if (hadValue && newValue != oldValue) fn(newValue);
       return;
     }
 
-    fn(producer.peek());
-
-    // After the update, set the status to
-    // clean since we've processed the latest value.
-    _status = CLEAN;
+    fn(newValue);
   }
 
   /// Disposes of the subscription.
