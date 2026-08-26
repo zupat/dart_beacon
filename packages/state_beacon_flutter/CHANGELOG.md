@@ -1,3 +1,7 @@
+# 3.1.2
+
+- [Fix] Bug where derived would remain in dirty state and stop propagating changes.
+
 # 3.1.1
 
 - [Feat] Add `asError` getter to the `AsyncValue`. This allows users to easily retrieve the `AsyncError` instance when the state is an error, or null otherwise.
