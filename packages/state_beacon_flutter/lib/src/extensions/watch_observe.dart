@@ -24,6 +24,11 @@ extension WidgetUtils<T> on BaseBeacon<T> {
   ///
   /// Note: must be called within a widget's build method.
   ///
+  /// Conditional watching is not supported: once a widget starts watching a
+  /// beacon, it will not stop until the beacon is disposed or the widget is
+  /// unmounted. If the watched beacon can change between builds, give the
+  /// widget a key tied to the beacon's identity (e.g. `ValueKey(item.id)`).
+  ///
   /// Usage:
   /// ```dart
   /// final counter = Beacon.writable(0);
@@ -51,6 +56,10 @@ extension WidgetUtils<T> on BaseBeacon<T> {
   ///
   /// The callback is provided with the current state of the beacon and a BuildContext.
   /// This can be used to show snackbars or other side effects.
+  ///
+  /// Conditional observing is not supported: once a widget starts observing
+  /// a beacon, the callback keeps firing until the beacon is disposed or the
+  /// widget is unmounted (see [watch]).
   ///
   /// Usage:
   /// ```dart
