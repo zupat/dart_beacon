@@ -1,3 +1,15 @@
+# 3.1.3
+
+- [Fix] Restore the tracking context when a derived beacon's compute throws, cancel queued derived subscriptions on dispose, and link derived sources by identity.
+
+- [Fix] Keep the family cache and its entries consistent when a family member is removed.
+
+- [Fix] Fix auto-sleep, buffered timer, progress and stream cleanup lifecycle edge cases.
+
+- [Fix] `ValueNotifierBeacon` now removes its beacon dispose callback safely, `dispose` is idempotent, and `observe` uses the latest callback after a rebuild.
+
+- [Chore] Bump `lite_ref` to `^0.8.3`.
+
 # 3.1.2
 
 - [Fix] Bug where derived would remain in dirty state and stop propagating changes.
