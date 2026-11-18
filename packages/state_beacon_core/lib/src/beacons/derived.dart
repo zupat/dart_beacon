@@ -62,9 +62,11 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
     currentGets = [];
     currentGetsIndex = 0;
 
+    // Assigned inside the try; only read below when no exception was thrown.
+    late final bool didUpdate;
+
     try {
       _value = _compute();
-      late final bool didUpdate;
       if (_isEmpty) {
         _initialValue = _value;
         didUpdate = true;
@@ -110,13 +112,6 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
       // We've rerun with the latest values from all of our sources.
       // This means that we no longer need to update until a signal changes
       _status = CLEAN;
-
-      assert(() {
-        if (didUpdate) {
-          BeaconObserver.instance?.onUpdate(this);
-        }
-        return true;
-      }());
     } finally {
       // Always restore the enclosing capture context, even when _compute
       // throws. Otherwise the globals keep pointing at this beacon and any
@@ -125,6 +120,16 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
       currentGetsIndex = prevGetsIndex;
       currentConsumer = prevConsumer;
     }
+
+    // Notify observers only after the capture context has been restored.
+    // Observers may read this beacon's value, which would otherwise be
+    // misdetected as a recursive access.
+    assert(() {
+      if (didUpdate) {
+        BeaconObserver.instance?.onUpdate(this);
+      }
+      return true;
+    }());
   }
 
   @override

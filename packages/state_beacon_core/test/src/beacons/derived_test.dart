@@ -1,6 +1,21 @@
 import 'package:state_beacon_core/state_beacon_core.dart';
 import 'package:test/test.dart';
 
+class _ValueReadingObserver extends LoggingObserver {
+  _ValueReadingObserver(this.beaconName);
+
+  final String beaconName;
+  int updates = 0;
+  final List<int> observedValues = [];
+
+  @override
+  void onUpdate(ReadableBeacon<dynamic> beacon) {
+    if (beacon.name != beaconName) return;
+    updates++;
+    observedValues.add(beacon.value as int);
+  }
+}
+
 //rm: 2 irrelevant tests
 void main() {
   test('should not run until accessed', () async {
@@ -374,6 +389,23 @@ void main() {
     // this read failed with "Recursive access detected" instead of recovering.
     expect(derived.value, 0);
     expect(derived.value, 0);
+  });
+
+  test('should let observers read the value after tracking is restored', () {
+    final source = Beacon.writable(0);
+    final derived = Beacon.derived(() => source.value * 2, name: 'derived');
+
+    expect(derived.value, 0);
+
+    final observer = _ValueReadingObserver('derived');
+    BeaconObserver.instance = observer;
+    addTearDown(() => BeaconObserver.instance = null);
+
+    source.value = 1;
+    expect(derived.value, 2);
+
+    expect(observer.updates, 1);
+    expect(observer.observedValues, [2]);
   });
 
   test('should throw AssertionError on recursive value access', () {
