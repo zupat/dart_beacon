@@ -595,6 +595,80 @@ void main() {
     expect(ran, 4);
   });
 
+  test('should sleep when an effect stops watching it', () async {
+    final show = Beacon.writable(true);
+    final dependency = Beacon.writable(0);
+    var ran = 0;
+
+    final derivedBeacon = Beacon.future(() async {
+      ran++;
+      return dependency.value;
+    });
+
+    final unsub = Beacon.effect(() {
+      if (show.value) derivedBeacon.value;
+    });
+
+    BeaconScheduler.flush();
+    await delay(k1ms);
+
+    expect(ran, 1);
+    expect(derivedBeacon.listenersCount, 1);
+
+    show.value = false;
+
+    BeaconScheduler.flush();
+    await delay(k1ms);
+
+    expect(derivedBeacon.listenersCount, 0);
+
+    dependency.increment();
+    await delay(k1ms);
+
+    // The beacon should have slept instead of rerunning.
+    expect(ran, 1);
+
+    unsub();
+  });
+
+  test('should sleep when a derived beacon stops watching it', () async {
+    final show = Beacon.writable(true);
+    final dependency = Beacon.writable(0);
+    var ran = 0;
+
+    final derivedBeacon = Beacon.future(() async {
+      ran++;
+      return dependency.value;
+    });
+
+    final derived = Beacon.derived<Object?>(
+      () => show.value ? derivedBeacon.value : null,
+    );
+
+    final unsub = Beacon.effect(() => derived.value);
+
+    BeaconScheduler.flush();
+    await delay(k1ms);
+
+    expect(ran, 1);
+    expect(derivedBeacon.listenersCount, 1);
+
+    show.value = false;
+
+    BeaconScheduler.flush();
+    await delay(k1ms);
+
+    expect(derivedBeacon.listenersCount, 0);
+
+    dependency.increment();
+    await delay(k1ms);
+
+    // The beacon should have slept instead of rerunning.
+    expect(ran, 1);
+
+    unsub();
+  });
+
   test('should run when it has no more watchers when shouldSleep=false',
       () async {
     final num1 = Beacon.writable<int>(10);

@@ -115,6 +115,18 @@ void main() {
       expect(buffer, equals([1, 2]));
     });
 
+    test('should cancel a pending timer when disposed', () async {
+      final beacon = Beacon.bufferedTime<int>(duration: k10ms);
+
+      beacon.add(1);
+      beacon.dispose();
+
+      await delay(k10ms * 2);
+
+      expect(beacon.isDisposed, isTrue);
+      expect(beacon.peek(), isEmpty);
+    });
+
     test('should reset buffer after time duration', () async {
       final beacon = Beacon.bufferedTime<int>(duration: k10ms * 3);
 

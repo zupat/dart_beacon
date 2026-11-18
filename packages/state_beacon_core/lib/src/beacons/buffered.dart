@@ -109,4 +109,11 @@ class BufferedTimeBeacon<T> extends BufferedBaseBeacon<T> {
     _timer?.cancel();
     super.reset(force: force);
   }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _timer = null;
+    super.dispose();
+  }
 }
