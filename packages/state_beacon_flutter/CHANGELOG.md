@@ -1,3 +1,11 @@
+# 3.1.3
+
+- [Fix] `ValueNotifierBeacon` now removes its beacon dispose callback safely instead of throwing a `ConcurrentModificationError`, and `dispose` is idempotent. This also fixes cleanup in the writable extension.
+
+- [Fix] `observe` now uses the latest callback after a widget rebuild instead of the one captured on the first build.
+
+- [Docs] Document that conditional `watch` and `observe` calls are not supported, and suggest keying widgets by beacon identity when the target beacon can change.
+
 # 3.1.2
 
 - [Fix] Bug where derived would remain in dirty state and stop propagating changes.
