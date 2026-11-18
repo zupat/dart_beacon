@@ -1,3 +1,15 @@
+# 3.1.3
+
+- [Fix] Restore the tracking context when a derived beacon's compute throws, and notify observers only after the context has been restored.
+
+- [Fix] Cancel queued derived subscriptions on dispose and skip callbacks when a subscription is disposed during a peek.
+
+- [Fix] Link derived sources by identity so beacons that override `==` are not mistaken for one another.
+
+- [Fix] Keep the family cache and its entries consistent when a family member is removed.
+
+- [Fix] Fix auto-sleep, buffered timer, progress and stream cleanup lifecycle edge cases, including disposal from `onDone` and null-safe stream unsubscribe cleanup.
+
 # 3.1.2
 
 - [Fix] Bug where derived would remain in dirty state and stop propagating changes.
