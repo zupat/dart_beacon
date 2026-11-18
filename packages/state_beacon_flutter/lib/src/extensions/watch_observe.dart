@@ -10,6 +10,13 @@ typedef ObserverCallback<T> = void Function(T prev, T next);
 final Finalizer<void Function()> _finalizer = Finalizer((fn) => fn());
 // coverage:ignore-end
 
+/// The latest `observe` callback for each beacon subscription key.
+///
+/// Keyed by beacon identity (via [Expando]) and by the widget's subscription
+/// key, so rebuilding a widget can replace its callback without creating a
+/// second subscription.
+final _observerCallbacks = Expando<Map<int, VoidCallback>>();
+
 /// @macro WidgetUtils
 extension WidgetUtils<T> on BaseBeacon<T> {
   /// Watches a beacon and triggers a widget
@@ -79,6 +86,14 @@ extension WidgetUtils<T> on BaseBeacon<T> {
     BuildContext context, {
     VoidCallback? callback,
   }) {
+    final callbacks = callback == null
+        ? null
+        : (_observerCallbacks[this] ??= <int, VoidCallback>{});
+
+    // Rebuilding with a new `observe` callback must replace the old one, even
+    // though the beacon subscription itself already exists.
+    if (callback != null) callbacks![key] = callback;
+
     if ($$widgetSubscribers$$.contains(key)) {
       return peek();
     }
@@ -88,18 +103,18 @@ extension WidgetUtils<T> on BaseBeacon<T> {
     final elementRef = WeakReference(context as Element);
     late VoidCallback unsub;
 
-    void rebuildWidget() {
-      elementRef.target!.markNeedsBuild();
-    }
-
-    final run = callback ?? rebuildWidget;
-
     void handleNewValue(T value) {
       if (elementRef.target?.mounted == true) {
-        run();
+        final cb = callbacks?[key];
+        if (cb != null) {
+          cb();
+        } else {
+          elementRef.target!.markNeedsBuild();
+        }
       } else {
         unsub();
         $$widgetSubscribers$$.remove(key);
+        callbacks?.remove(key);
       }
     }
 
@@ -116,6 +131,7 @@ extension WidgetUtils<T> on BaseBeacon<T> {
       () {
         unsub();
         $$widgetSubscribers$$.remove(key);
+        callbacks?.remove(key);
       },
     );
     // coverage:ignore-end
