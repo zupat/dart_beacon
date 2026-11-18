@@ -33,7 +33,7 @@ void main() {
     final hashSet = group.hashSet<int>({0});
     final hashMap = group.hashMap<int, int>({0: 0});
     final derivedFuture = group.future<int>(() async => filtered() + 1);
-    final derivedStream = group.streamRaw(Stream.empty);
+    final derivedStream = group.streamRaw<int?>(Stream<int?>.empty);
     final periodic = group.periodic(k10ms, (i) => i + 1);
     final progress = group.progress(
       interval: k10ms,
