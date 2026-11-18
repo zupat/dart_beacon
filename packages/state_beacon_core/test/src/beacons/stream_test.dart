@@ -221,6 +221,21 @@ void main() {
     expect(listens, 3);
   });
 
+  test('should dispose after unsubscribing', () async {
+    final beacon = Beacon.stream(
+      () => Stream<int>.value(1),
+      shouldSleep: false,
+    );
+
+    BeaconScheduler.flush();
+    await delay(k1ms);
+
+    beacon.unsubscribe();
+
+    expect(beacon.dispose, returnsNormally);
+    expect(beacon.isDisposed, isTrue);
+  });
+
   test('should return future immediately after creating', () async {
     // BeaconObserver.instance = LoggingObserver();
     final myStream = Stream.periodic(k10ms, (i) => i + 1);
