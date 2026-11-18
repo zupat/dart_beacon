@@ -353,4 +353,23 @@ void main() {
 
     expect(called, 1);
   });
+
+  test('should not notify a subscription disposed before the first flush', () {
+    final source = Beacon.writable(0);
+    final derived = Beacon.derived(() => source.value);
+    final received = <int>[];
+
+    final cancel = derived.subscribe(received.add, startNow: false);
+
+    // Evaluate the derived beacon while its forced first run is still queued,
+    // so the later source change queues the subscription a second time.
+    expect(derived.peek(), 0);
+
+    source.value = 1;
+    cancel();
+
+    BeaconScheduler.flush();
+
+    expect(received, isEmpty);
+  });
 }
