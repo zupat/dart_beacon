@@ -55,9 +55,14 @@ mixin _AutoSleep<T, SubT> on ReadableBeacon<T> {
     // such as .next() calls
     // we want to include widget subscriptions so if it's not empty
     // we have widgets subs and sleep if it get unmounted
-    final canSleep =
-        // ignore: deprecated_member_use_from_same_package
-        shouldSleep && ($$widgetSubscribers$$.isNotEmpty || observer is Effect);
+    final canSleep = shouldSleep &&
+        (
+            // ignore: deprecated_member_use_from_same_package
+            $$widgetSubscribers$$.isNotEmpty ||
+            observer is Effect ||
+            // A derived beacon that drops a conditional dependency should
+            // not keep the source awake.
+            observer is DerivedBeacon);
     super._removeObserver(observer);
     if (!shouldSleep) return;
     if (canSleep && _observers.isEmpty) {

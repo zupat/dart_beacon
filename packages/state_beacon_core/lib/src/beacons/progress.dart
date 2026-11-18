@@ -92,6 +92,7 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   final T Function()? onDone;
 
   StreamSubscription<dynamic>? _subscription;
+  Timer? _loopTimer;
   Duration _elapsed = Duration.zero;
 
   /// Starts emitting values periodically.
@@ -103,6 +104,8 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
 
     // Stop any existing progression.
     _subscription?.cancel();
+    _loopTimer?.cancel();
+    _loopTimer = null;
 
     // Reset elapsed time for a fresh start.
     _elapsed = Duration.zero;
@@ -127,13 +130,23 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
 
       if (progress >= 1.0) {
         if (onDone != null) {
-          _setValue(onDone!.call());
+          final doneValue = onDone!.call();
+
+          // onDone may have disposed the beacon.
+          if (_isDisposed) return;
+
+          _setValue(doneValue);
+        }
+
+        // onDone may have stopped (or paused/disposed) the progression.
+        if (_isDisposed || status.peek() != ProgressStatus.running) {
+          return;
         }
 
         if (loop) {
-          // Restart in the next microtask to allow listeners to
-          // process the 1.0 value.
-          Future.delayed(interval, start);
+          // Restart after a delay to allow listeners to process the 1.0
+          // value. Keep a handle so stop() can cancel the restart.
+          _loopTimer = Timer(interval, start);
         } else {
           stop();
         }
@@ -145,6 +158,8 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   void stop() {
     _subscription?.cancel();
     _subscription = null;
+    _loopTimer?.cancel();
+    _loopTimer = null;
     _elapsed = Duration.zero;
     status.value = ProgressStatus.stopped;
   }

@@ -51,11 +51,9 @@ mixin Consumer {
 
     for (var i = index; i < sources.length; i++) {
       final source = sources[i]!;
-      source._observers.remove(this);
-      assert(() {
-        BeaconObserver.instance?.onStopWatch(name, source);
-        return true;
-      }());
+      // Use _removeObserver so producer hooks (e.g. auto-sleep) run when a
+      // conditional dependency is dropped.
+      source._removeObserver(this);
     }
   }
 

@@ -417,4 +417,83 @@ void main() {
 
     beacon.dispose();
   });
+
+  test('should not restart when stopped before the loop timer fires', () async {
+    final values = <int>[];
+    final beacon = Beacon.progress<int>(
+      interval: k10ms,
+      totalDuration: k10ms,
+      initialValue: 0,
+      onStart: () => 0,
+      onDone: () => 1,
+      loop: true,
+    );
+
+    beacon.subscribe((value) {
+      values.add(value);
+      if (value == 1) beacon.stop();
+    });
+
+    beacon.start();
+
+    await delay(k10ms * 4);
+
+    expect(values, [0, 1]);
+    expect(beacon.status.value, ProgressStatus.stopped);
+    expect(beacon.peek(), 1);
+
+    beacon.dispose();
+  });
+
+  test('should not restart when stop() is called from onDone', () async {
+    final values = <int>[];
+    late ProgressBeacon<int> beacon;
+
+    beacon = Beacon.progress<int>(
+      interval: k10ms,
+      totalDuration: k10ms,
+      initialValue: 0,
+      onStart: () => 0,
+      onDone: () {
+        beacon.stop();
+        return 1;
+      },
+      loop: true,
+    );
+
+    beacon.subscribe(values.add);
+
+    beacon.start();
+
+    await delay(k10ms * 4);
+
+    expect(values, [0, 1]);
+    expect(beacon.status.value, ProgressStatus.stopped);
+    expect(beacon.peek(), 1);
+
+    beacon.dispose();
+  });
+
+  test('should not write after onDone disposes the beacon', () async {
+    late ProgressBeacon<int> beacon;
+
+    beacon = Beacon.progress<int>(
+      interval: k10ms,
+      totalDuration: k10ms,
+      initialValue: 0,
+      onStart: () => 0,
+      onDone: () {
+        beacon.dispose();
+        return 1;
+      },
+    );
+
+    beacon.subscribe((_) {});
+
+    beacon.start();
+
+    await delay(k10ms * 3);
+
+    expect(beacon.isDisposed, isTrue);
+  });
 }
