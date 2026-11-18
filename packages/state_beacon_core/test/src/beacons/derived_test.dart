@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:state_beacon_core/state_beacon_core.dart';
 import 'package:test/test.dart';
 
@@ -406,6 +408,37 @@ void main() {
 
     expect(observer.updates, 1);
     expect(observer.observedValues, [2]);
+  });
+
+  test('should track a different but equal raw stream beacon', () async {
+    final one = StreamController<int>();
+    final two = StreamController<int>();
+    var created = 0;
+    Stream<int> create() => created++ == 0 ? one.stream : two.stream;
+
+    final a = Beacon.streamRaw<int>(create, initialValue: 0, name: 'raw');
+    final b = Beacon.streamRaw<int>(create, initialValue: 0, name: 'raw');
+    addTearDown(() {
+      a.dispose();
+      b.dispose();
+      unawaited(one.close());
+      unawaited(two.close());
+    });
+
+    final select = Beacon.writable(false);
+    final derived = Beacon.derived(() => select.value ? b.value : a.value);
+
+    expect(a, b);
+    expect(derived.value, 0);
+
+    select.value = true;
+    expect(derived.value, 0);
+
+    two.add(2);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(b.value, 2);
+    expect(derived.value, 2);
   });
 
   test('should throw AssertionError on recursive value access', () {

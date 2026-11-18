@@ -71,7 +71,11 @@ mixin Consumer {
     // we have to check if currentGets is empty because if it's not
     // then we changed sources in the past so we can't just increment
     // we can only increment when sources are in the same order
-    if (currentGets.isEmpty && _producerAtIndex(currentGetsIndex) == source) {
+    // Compare by identity: two distinct producers can override `==` (e.g.
+    // RawStreamBeacon with the same options) while watching different streams.
+    // Reusing the old source then leaves us subscribed to the wrong beacon.
+    if (currentGets.isEmpty &&
+        identical(_producerAtIndex(currentGetsIndex), source)) {
       currentGetsIndex++;
     } else {
       assert(() {
