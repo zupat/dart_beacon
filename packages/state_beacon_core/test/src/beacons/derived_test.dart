@@ -356,6 +356,26 @@ void main() {
     expect(computeCount, 3);
   });
 
+  test('should restore tracking context when compute throws', () {
+    final source = Beacon.writable(0);
+    var shouldThrow = true;
+
+    final derived = Beacon.derived(() {
+      final value = source.value;
+      if (shouldThrow) throw StateError('compute failed');
+      return value;
+    });
+
+    expect(() => derived.value, throwsStateError);
+
+    shouldThrow = false;
+
+    // Before the fix, currentConsumer was left pointing at this beacon, so
+    // this read failed with "Recursive access detected" instead of recovering.
+    expect(derived.value, 0);
+    expect(derived.value, 0);
+  });
+
   test('should throw AssertionError on recursive value access', () {
     late ReadableBeacon<int> derived;
 
