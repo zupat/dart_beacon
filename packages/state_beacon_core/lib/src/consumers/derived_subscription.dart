@@ -108,6 +108,11 @@ class DerivedSubscription<T> implements Consumer {
     // DIRTY, so its `_status < newStatus` guard silenced it forever.
     final newValue = producer.peek();
 
+    // peek() runs the producer's computation, which may dispose this
+    // subscription (e.g. by cancelling from inside that computation).
+    // Don't invoke the user callback in that case.
+    if (_isDisposed) return;
+
     // Mark ourselves clean *after* evaluating (peek() re-dirties observers
     // when it recomputes) but *before* invoking user code, so that a write
     // performed inside fn() arrives as a fresh notification and a throwing
