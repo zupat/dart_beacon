@@ -93,6 +93,50 @@ void main() {
     expect(identical(beacon1, beacon2), isFalse);
   });
 
+  test('should not evict a replacement when a removed beacon is disposed', () {
+    final family = Beacon.family((int arg) => Beacon.writable('$arg'));
+
+    expect(family.entries.value, isEmpty);
+
+    final original = family(1);
+    family.remove(1);
+    final replacement = family(1);
+
+    original.dispose();
+
+    expect(family.containsKey(1), isTrue);
+    expect(identical(family(1), replacement), isTrue);
+    expect(
+      family.entries.value.map((e) => e.value).toList(),
+      [replacement],
+    );
+  });
+
+  test('should only remove the entry for the given key', () {
+    Stream<int> empty() => const Stream<int>.empty();
+    final family = Beacon.family(
+      (int arg) => Beacon.streamRaw<int>(
+        empty,
+        isLazy: true,
+        name: 'raw',
+      ),
+    );
+
+    expect(family.entries.value, isEmpty);
+
+    final one = family(1);
+    final two = family(2);
+
+    // The two beacons share the same configuration, so they compare equal.
+    expect(one, two);
+
+    family.remove(1);
+
+    expect(family.containsKey(1), isFalse);
+    expect(family.containsKey(2), isTrue);
+    expect(family.entries.value.map((e) => e.key).toList(), [2]);
+  });
+
   test('should clear the cache and dispose beacons', () {
     final family = Beacon.family((int arg) => Beacon.writable('$arg'));
 

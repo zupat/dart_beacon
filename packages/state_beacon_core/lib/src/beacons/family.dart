@@ -51,9 +51,13 @@ class BeaconFamily<Arg, BeaconType extends ReadableBeacon<dynamic>> {
 
     beacon.onDispose(() {
       if (_clearing) return;
-      final removed = _cache.remove(arg);
-      if (!_beaconsAccessed || removed == null) return;
-      _entries.removeWhere((e) => e.value == removed);
+      // The beacon may have been removed from the family and replaced by a
+      // new one for the same argument. Only evict the cache entry if it is
+      // still this beacon.
+      if (!identical(_cache[arg], beacon)) return;
+      _cache.remove(arg);
+      if (!_beaconsAccessed) return;
+      _entries.removeWhere((e) => identical(e.value, beacon));
     });
 
     return beacon;
@@ -66,7 +70,9 @@ class BeaconFamily<Arg, BeaconType extends ReadableBeacon<dynamic>> {
   BeaconType? remove(Arg arg) {
     final removed = _cache.remove(arg);
     if (removed != null && _beaconsAccessed) {
-      _entries.removeWhere((e) => e.value == removed);
+      // Match by key: distinct beacons can compare equal, and removing by
+      // value would drop their entries too.
+      _entries.removeWhere((e) => e.key == arg);
     }
     return removed;
   }
