@@ -30,6 +30,8 @@ class DerivedSubscription<T> implements Consumer {
   /// swallow a change that landed before the flush.
   bool _forceFirstRun = false;
 
+  bool _isDisposed = false;
+
   /// The derived beacon that this subscription is watching.
   final DerivedBeacon<T> producer;
 
@@ -46,12 +48,14 @@ class DerivedSubscription<T> implements Consumer {
   Status _status = DIRTY;
 
   void _schedule() {
+    if (_isDisposed) return;
     _effectQueue.add(this);
     _flushFn();
   }
 
   @override
   void stale(Status newStatus) {
+    if (_isDisposed) return;
     if (_status < newStatus) {
       final oldStatus = _status;
       _status = newStatus;
@@ -71,6 +75,8 @@ class DerivedSubscription<T> implements Consumer {
 
   @override
   void updateIfNecessary() {
+    if (_isDisposed) return;
+
     // Check dependent sources (only for DerivedBeacon)
     if (_status == CHECK) {
       producer.updateIfNecessary();
@@ -102,6 +108,11 @@ class DerivedSubscription<T> implements Consumer {
     // DIRTY, so its `_status < newStatus` guard silenced it forever.
     final newValue = producer.peek();
 
+    // peek() runs the producer's computation, which may dispose this
+    // subscription (e.g. by cancelling from inside that computation).
+    // Don't invoke the user callback in that case.
+    if (_isDisposed) return;
+
     // Mark ourselves clean *after* evaluating (peek() re-dirties observers
     // when it recomputes) but *before* invoking user code, so that a write
     // performed inside fn() arrives as a fresh notification and a throwing
@@ -129,9 +140,14 @@ class DerivedSubscription<T> implements Consumer {
   /// Disposes of the subscription.
   @override
   void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
     // Remove this subscription from the producer's observer list.
     producer._removeObserver(this);
-    _effectQueue.remove(this);
+    // The subscription can be queued more than once (forced first run plus a
+    // later source change), so remove every entry to prevent it from running
+    // after disposal.
+    _effectQueue.removeWhere((consumer) => identical(consumer, this));
   }
 
   @override

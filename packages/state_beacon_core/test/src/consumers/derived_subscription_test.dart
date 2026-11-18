@@ -353,4 +353,56 @@ void main() {
 
     expect(called, 1);
   });
+
+  test('should not notify a subscription disposed before the first flush', () {
+    final source = Beacon.writable(0);
+    final derived = Beacon.derived(() => source.value);
+    final received = <int>[];
+
+    final cancel = derived.subscribe(received.add, startNow: false);
+
+    // Evaluate the derived beacon while its forced first run is still queued,
+    // so the later source change queues the subscription a second time.
+    expect(derived.peek(), 0);
+
+    source.value = 1;
+    cancel();
+
+    BeaconScheduler.flush();
+
+    expect(received, isEmpty);
+  });
+
+  test('should not notify when disposed during computation', () {
+    final source = Beacon.writable(0);
+    late void Function() cancel;
+    var shouldCancel = false;
+
+    final derived = Beacon.derived(() {
+      final value = source.value;
+      if (shouldCancel) cancel();
+      return value;
+    });
+
+    // Give the derived beacon a value so the subscription is not a forced
+    // first run.
+    expect(derived.value, 0);
+
+    final received = <int>[];
+    cancel = derived.subscribe(received.add, startNow: false);
+
+    // Queue the subscription (CHECK) ...
+    source.value = 1;
+    // ... then let the derived recompute mark it DIRTY without scheduling.
+    expect(derived.value, 1);
+
+    // Re-dirty the derived beacon. The subscription is already queued and
+    // stays DIRTY, so the flush evaluates the producer from update().
+    source.value = 2;
+    shouldCancel = true;
+
+    BeaconScheduler.flush();
+
+    expect(received, isEmpty);
+  });
 }
