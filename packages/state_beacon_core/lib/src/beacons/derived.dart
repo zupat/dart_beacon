@@ -62,58 +62,68 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
     currentGets = [];
     currentGetsIndex = 0;
 
-    _value = _compute();
+    // Assigned inside the try; only read below when no exception was thrown.
     late final bool didUpdate;
-    if (_isEmpty) {
-      _initialValue = _value;
-      didUpdate = true;
-    } else {
-      didUpdate = _previousValue != _value;
-    }
-    _isEmpty = false;
 
-    // if the sources have changed, update source & observer links
-    if (currentGets.isNotEmpty) {
-      // remove all old Sources' .observers links to us
-      stopWatchingAllAfter(currentGetsIndex);
-
-      if (sources.isNotEmpty && currentGetsIndex > 0) {
-        sources.length = currentGetsIndex + currentGets.length;
-        for (var i = 0; i < currentGets.length; i++) {
-          sources[currentGetsIndex + i] = currentGets[i];
-        }
+    try {
+      _value = _compute();
+      if (_isEmpty) {
+        _initialValue = _value;
+        didUpdate = true;
       } else {
-        sources = currentGets;
+        didUpdate = _previousValue != _value;
+      }
+      _isEmpty = false;
+
+      // if the sources have changed, update source & observer links
+      if (currentGets.isNotEmpty) {
+        // remove all old Sources' .observers links to us
+        stopWatchingAllAfter(currentGetsIndex);
+
+        if (sources.isNotEmpty && currentGetsIndex > 0) {
+          sources.length = currentGetsIndex + currentGets.length;
+          for (var i = 0; i < currentGets.length; i++) {
+            sources[currentGetsIndex + i] = currentGets[i];
+          }
+        } else {
+          sources = currentGets;
+        }
+
+        // Add ourselves to the end of the parent .observers array
+        for (var i = currentGetsIndex; i < sources.length; i++) {
+          final source = sources[i]!;
+          source._observers.add(this);
+        }
+      } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
+        // remove all old sources' .observers links to us
+        stopWatchingAllAfter(currentGetsIndex);
+        sources.length = currentGetsIndex;
       }
 
-      // Add ourselves to the end of the parent .observers array
-      for (var i = currentGetsIndex; i < sources.length; i++) {
-        final source = sources[i]!;
-        source._observers.add(this);
+      // handles diamond depenendencies if we're the parent of a diamond.
+      if (didUpdate && _observers.isNotEmpty) {
+        // We've changed value, so mark our children as
+        // dirty so they'll reevaluate
+        for (var i = 0; i < _observers.length; i++) {
+          _observers[i]._status = DIRTY;
+        }
       }
-    } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
-      // remove all old sources' .observers links to us
-      stopWatchingAllAfter(currentGetsIndex);
-      sources.length = currentGetsIndex;
+
+      // We've rerun with the latest values from all of our sources.
+      // This means that we no longer need to update until a signal changes
+      _status = CLEAN;
+    } finally {
+      // Always restore the enclosing capture context, even when _compute
+      // throws. Otherwise the globals keep pointing at this beacon and any
+      // later read is misdetected as a recursive access.
+      currentGets = prevGets;
+      currentGetsIndex = prevGetsIndex;
+      currentConsumer = prevConsumer;
     }
 
-    currentGets = prevGets;
-    currentGetsIndex = prevGetsIndex;
-    currentConsumer = prevConsumer;
-
-    // handles diamond depenendencies if we're the parent of a diamond.
-    if (didUpdate && _observers.isNotEmpty) {
-      // We've changed value, so mark our children as
-      // dirty so they'll reevaluate
-      for (var i = 0; i < _observers.length; i++) {
-        _observers[i]._status = DIRTY;
-      }
-    }
-
-    // We've rerun with the latest values from all of our sources.
-    // This means that we no longer need to update until a signal changes
-    _status = CLEAN;
-
+    // Notify observers only after the capture context has been restored.
+    // Observers may read this beacon's value, which would otherwise be
+    // misdetected as a recursive access.
     assert(() {
       if (didUpdate) {
         BeaconObserver.instance?.onUpdate(this);
