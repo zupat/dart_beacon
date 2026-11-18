@@ -365,6 +365,25 @@ void main() {
     expect(next3, -1);
   });
 
+  test('should not throw when a dependency changes after unsubscribe',
+      () async {
+    final dependency = Beacon.writable(0);
+    final beacon = Beacon.streamRaw(
+      () => Stream<int>.value(dependency.value),
+      initialValue: -1,
+    );
+
+    BeaconScheduler.flush();
+    await delay(k1ms);
+
+    beacon.unsubscribe();
+
+    dependency.value = 1;
+    await delay(k1ms);
+
+    beacon.dispose();
+  });
+
   test('should mirror values to stream getter', () async {
     final stream = Stream.fromIterable([1, 2, 3]);
 

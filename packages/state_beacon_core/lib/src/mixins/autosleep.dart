@@ -44,8 +44,11 @@ mixin _AutoSleep<T, SubT> on ReadableBeacon<T> {
   }
 
   void _unsubFromStream() {
-    final oldSub = _sub!;
-    oldSub.cancel();
+    // The subscription may already have been cleared by unsubscribe().
+    final oldSub = _sub;
+    if (oldSub == null) return;
+
+    unawaited(oldSub.cancel());
     _sub = null;
   }
 
