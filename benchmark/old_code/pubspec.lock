@@ -29,17 +29,17 @@ packages:
     dependency: "direct dev"
     description:
       name: lints
-      sha256: a5e2b223cb7c9c8efdc663ef484fdd95bb243bff242ef5b13e26883547fce9a0
+      sha256: "12f842a479589fea194fe5c5a3095abc7be0c1f2ddfa9a0e76aed1dbd26a87df"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.0"
+    version: "6.1.0"
   state_beacon_core:
     dependency: "direct main"
     description:
       name: state_beacon_core
-      sha256: "42f72cf8513e6df943818978ed23d192edbc6baf51deea2b866c56ee140aeaaa"
+      sha256: "9483998df3e9b0c2c88fd8ce216f97d592bfc4a551643156cac69ff2affac529"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.1"
+    version: "2.0.3"
 sdks:
   dart: ">=3.10.0 <4.0.0"

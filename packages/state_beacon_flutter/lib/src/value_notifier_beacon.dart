@@ -8,6 +8,11 @@ class ValueNotifierBeacon<T> extends ValueNotifier<T> {
 
   final disposeListeners = <VoidCallback>[];
 
+  var _isDisposed = false;
+
+  /// Whether this notifier has already been disposed.
+  bool get isDisposed => _isDisposed;
+
   void addDisposeCallback(VoidCallback callback) {
     disposeListeners.add(callback);
   }
@@ -18,6 +23,9 @@ class ValueNotifierBeacon<T> extends ValueNotifier<T> {
 
   @override
   void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+
     for (final cb in disposeListeners) {
       cb();
     }

@@ -36,15 +36,27 @@ ValueNotifier<T> _toValueNotifier<T>(ReadableBeacon<T> beacon) {
 
   final unsub = beacon.subscribe(notifier.set, startNow: false);
 
+  late VoidCallback removeBeaconDisposeCallback;
+
   notifier.addDisposeCallback(() {
     unsub();
-    _vnCache.remove(key);
+
+    // When the beacon is disposing, it is already iterating its dispose
+    // callbacks. Removing this callback from that list mid-iteration would
+    // throw a ConcurrentModificationError and skip the remaining cleanup.
+    // This can happen through our own callback or one registered earlier.
+    if (!beacon.isDisposed) {
+      removeBeaconDisposeCallback();
+    }
+
+    if (identical(_vnCache[key], notifier)) {
+      _vnCache.remove(key);
+    }
   });
 
-  beacon.onDispose(() {
-    notifier.dispose();
-    _vnCache.remove(key);
-  });
+  // `ValueNotifierBeacon.dispose` is idempotent, so an earlier dispose
+  // callback may already have disposed the notifier before this hook runs.
+  removeBeaconDisposeCallback = beacon.onDispose(notifier.dispose);
 
   return notifier;
 }

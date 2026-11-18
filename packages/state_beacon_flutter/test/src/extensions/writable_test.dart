@@ -84,6 +84,91 @@ void main() {
     expect(hasNotifier(beacon), isFalse);
   });
 
+  test(
+    'should dispose a recreated notifier when the beacon is disposed',
+    () {
+      final beacon = Beacon.writable(0);
+
+      beacon.toValueNotifier().dispose();
+
+      expect(hasNotifier(beacon), isFalse);
+
+      final secondNotifier = beacon.toValueNotifier();
+
+      expect(hasNotifier(beacon), isTrue);
+      expect(beacon.listenersCount, 1);
+
+      var called = 0;
+      secondNotifier.addListener(() => called++);
+
+      beacon.value = 1;
+      BeaconScheduler.flush();
+
+      expect(called, 1);
+
+      // The stale dispose callback from the first notifier must not throw here
+      // and must not prevent the recreated notifier from being cleaned up.
+      beacon.dispose();
+
+      expect(hasNotifier(beacon), isFalse);
+      expect(beacon.listenersCount, 0);
+      // ignore: invalid_use_of_protected_member
+      expect(secondNotifier.hasListeners, isFalse);
+    },
+  );
+
+  test(
+    'should not throw when an earlier dispose callback disposes the notifier',
+    () {
+      final beacon = Beacon.writable(0);
+
+      late final ValueNotifier<int> notifier;
+      var laterCallbackRan = false;
+
+      // The first callback is registered before the notifier's own hook, so it
+      // runs first while the beacon is iterating its dispose callbacks.
+      beacon
+        ..onDispose(() => notifier.dispose())
+        ..onDispose(() => laterCallbackRan = true);
+
+      notifier = beacon.toValueNotifier();
+
+      beacon.dispose();
+
+      expect(laterCallbackRan, isTrue);
+      expect(hasNotifier(beacon), isFalse);
+      expect(beacon.listenersCount, 0);
+      // ignore: invalid_use_of_protected_member
+      expect(notifier.hasListeners, isFalse);
+    },
+  );
+
+  test(
+    'should not leave dispose callbacks behind after repeated '
+    'dispose/recreate cycles',
+    () {
+      final beacon = Beacon.writable(0);
+
+      for (var i = 0; i < 3; i++) {
+        beacon.toValueNotifier().dispose();
+        expect(hasNotifier(beacon), isFalse);
+        expect(beacon.listenersCount, 0);
+      }
+
+      final notifier = beacon.toValueNotifier();
+
+      expect(hasNotifier(beacon), isTrue);
+      expect(beacon.listenersCount, 1);
+
+      beacon.dispose();
+
+      expect(hasNotifier(beacon), isFalse);
+      expect(beacon.listenersCount, 0);
+      // ignore: invalid_use_of_protected_member
+      expect(notifier.hasListeners, isFalse);
+    },
+  );
+
   test('should remove notifier from cache when notifier is disposed.', () {
     final age = Beacon.writable(50);
     final name = Beacon.writable('bob');
