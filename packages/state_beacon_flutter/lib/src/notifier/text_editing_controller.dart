@@ -26,24 +26,37 @@ class TextEditingBeacon extends WritableBeacon<TextEditingValue> {
               : TextEditingValue(text: text),
         ) {
     group?.add(this);
-    var syncing = false;
-
-    void safeWrite(VoidCallback fn) {
-      if (syncing) return;
-      syncing = true;
-      try {
-        fn();
-      } finally {
-        syncing = false;
-      }
-    }
+    var syncingToController = false;
+    var syncingToBeacon = false;
 
     _controller.addListener(() {
-      safeWrite(() => set(_controller.value, force: true));
+      final controllerValue = _controller.value;
+      if (syncingToController &&
+          (identical(controllerValue, peek()) || controllerValue == peek())) {
+        return;
+      }
+      if (syncingToBeacon) return;
+      syncingToBeacon = true;
+      try {
+        set(controllerValue, force: true);
+      } finally {
+        syncingToBeacon = false;
+      }
     });
 
     subscribeSynchronously(
-      (v) => safeWrite(() => _controller.value = v),
+      (v) {
+        if (syncingToBeacon &&
+            (identical(_controller.value, v) || _controller.value == v)) {
+          return;
+        }
+        syncingToController = true;
+        try {
+          _controller.value = v;
+        } finally {
+          syncingToController = false;
+        }
+      },
     );
 
     _controller.disposeCallback = dispose;

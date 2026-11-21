@@ -80,4 +80,28 @@ void main() {
 
     expect(called, 1);
   });
+
+  test(
+    'should stay in sync when a controller listener modifies text re-entrantly',
+    () {
+      final beacon = TextEditingBeacon();
+      beacon.controller.addListener(() {
+        if (beacon.controller.text == 'bad') {
+          beacon.controller.text = 'good';
+        }
+      });
+
+      beacon.value = const TextEditingValue(text: 'bad');
+
+      expect(beacon.controller.text, 'good');
+      expect(
+        beacon.value.text,
+        'good',
+        reason: 'Re-entrant controller listener updates must sync back to the '
+            'beacon.',
+      );
+
+      beacon.dispose();
+    },
+  );
 }
