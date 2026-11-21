@@ -77,17 +77,19 @@ class DerivedSubscription<T> implements Consumer {
   void updateIfNecessary() {
     if (_isDisposed) return;
 
-    // Check dependent sources (only for DerivedBeacon)
-    if (_status == CHECK) {
-      producer.updateIfNecessary();
-    }
+    try {
+      // Check dependent sources (only for DerivedBeacon)
+      if (_status == CHECK) {
+        producer.updateIfNecessary();
+      }
 
-    // Update if still dirty
-    if (_status == DIRTY) {
-      update();
+      // Update if still dirty
+      if (_status == DIRTY) {
+        update();
+      }
+    } finally {
+      _status = CLEAN;
     }
-
-    _status = CLEAN;
   }
 
   @override

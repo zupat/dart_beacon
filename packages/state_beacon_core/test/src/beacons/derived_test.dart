@@ -459,4 +459,56 @@ void main() {
       ),
     );
   });
+
+  test('should recover and notify observers after transient compute error', () {
+    final divisor = Beacon.writable(1);
+    final quotient = Beacon.derived(() {
+      if (divisor.value == 0) throw StateError('divide by zero');
+      return 100 ~/ divisor.value;
+    });
+    final doubled = Beacon.derived(() => quotient.value * 2);
+
+    final subValues = <int>[];
+    final effectValues = <int>[];
+    final unsub = quotient.subscribe(subValues.add);
+    final disposeEffect = Beacon.effect(() => effectValues.add(doubled.value));
+
+    BeaconScheduler.flush();
+    expect(subValues, [100]);
+    expect(effectValues, [200]);
+
+    divisor.value = 0;
+    expect(BeaconScheduler.flush, throwsStateError);
+    // Drain the second queued consumer that also failed on divisor == 0.
+    expect(BeaconScheduler.flush, throwsStateError);
+
+    divisor.value = 2;
+    BeaconScheduler.flush();
+
+    expect(subValues, [100, 50]);
+    expect(effectValues, [200, 100]);
+
+    unsub();
+    disposeEffect();
+  });
+
+  test('should recover when first compute throws and source later changes', () {
+    final divisor = Beacon.writable(0);
+    final quotient = Beacon.derived(() {
+      if (divisor.value == 0) throw StateError('divide by zero');
+      return 100 ~/ divisor.value;
+    });
+
+    final seen = <int>[];
+    final unsub = quotient.subscribe(seen.add);
+
+    expect(BeaconScheduler.flush, throwsStateError);
+    expect(seen, isEmpty);
+
+    divisor.value = 4;
+    BeaconScheduler.flush();
+
+    expect(seen, [25]);
+    unsub();
+  });
 }
