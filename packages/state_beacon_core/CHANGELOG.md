@@ -1,3 +1,29 @@
+# 3.1.4
+
+- [Fix] Subscriptions and effects no longer run after disposal, run cleanups untracked, and stay responsive after a throw. `next()` no longer throws on back-to-back updates.
+
+- [Fix] `dispose()` is safe to call twice, and pending timers and streams are cancelled (debounced, throttled, buffered, progress, and stream-backed beacons).
+
+- [Fix] `FutureBeacon`/`StreamBeacon`: `toFuture()` wakes a sleeping beacon and `reset()` discards in-flight updates.
+
+- [Fix] Beacons that override `==` are no longer confused with each other when wrapping or deriving.
+
+- [Fix] `Beacon.untracked` no longer tracks reads inside a derived beacon, and `AsyncValue.tryCatch` no longer writes to a disposed beacon.
+
+- [Fix] General hardening of the core
+
+### Behavioural changes
+
+- `SetBeacon.add` and `MapBeacon.putIfAbsent` no longer notify listeners when the value is already present.
+
+- `ListBeacon` setters and `UndoRedoBeacon.set` are no longer tracked reads, and reads inside an `Effect` cleanup are untracked.
+
+- `ThrottledBeacon.setDuration` flushes or restarts pending buffered values, and `DebouncedBeacon.reset()` discards the pending value and resets immediately.
+
+- `ProgressBeacon.pause()`/`resume()` ignore calls in the wrong state, and pausing between loop iterations is supported.
+
+- Subscribing to an auto-sleeping beacon now wakes it, and `BeaconFamily.clear()` keeps `entries` active.
+
 # 3.1.3
 
 - [Fix] Restore the tracking context when a derived beacon's compute throws, and notify observers only after the context has been restored.
