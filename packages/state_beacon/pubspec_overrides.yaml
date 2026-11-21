@@ -1,3 +1,5 @@
 dependency_overrides:
-  state_beacon_flutter: 
+  state_beacon_core:
+    path: ../state_beacon_core
+  state_beacon_flutter:
     path: ../state_beacon_flutter

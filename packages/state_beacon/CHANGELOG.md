@@ -1,3 +1,53 @@
+# 4.0.0
+
+- [Breaking] Upgraded `lite_ref` to `^1.0.1`:
+  - `autoDispose: false` now only disables zero-listener disposal; scope-owned values are still disposed on override replacement and scope unmount. Migrate externally owned values from `overrideWith((_) => value, autoDispose: false)` to `overrideWithValue(value)`:
+
+    ### Before
+
+    ```dart
+    LiteRefScope(
+      overrides: {
+        controllerRef.overrideWith((_) => sharedController, autoDispose: false),
+      },
+      child: const MyApp(),
+    );
+    ```
+
+    ### After
+
+    ```dart
+    LiteRefScope(
+      overrides: {
+        controllerRef.overrideWithValue(sharedController),
+      },
+      child: const MyApp(),
+    );
+    ```
+
+  - Scoped ref factories now receive the owning `LiteRefScope`'s `BuildContext` rather than the requesting widget's context, and inter-ref dependencies are tracked synchronously during factory execution. Resolve dependent refs eagerly in the factory rather than inside lazy closures (`Beacon.derived`, `Beacon.future`, `Beacon.stream`) so `lite_ref` properly tracks them for auto-disposal and override eviction:
+
+    ### Before
+
+    ```dart
+    final countRef = Ref.scoped((ctx) => Beacon.writable(0));
+    final doubledCountRef = Ref.scoped(
+      (ctx) => Beacon.derived(() => countRef(ctx).value * 2),
+    );
+    ```
+
+    ### After
+
+    ```dart
+    final countRef = Ref.scoped((ctx) => Beacon.writable(0));
+    final doubledCountRef = Ref.scoped((ctx) {
+      final count = countRef(ctx);
+      return Beacon.derived(() => count.value * 2);
+    });
+    ```
+
+- [Chore] Upgraded `state_beacon_flutter` to `^3.1.4` (picking up `state_beacon_core ^3.1.4` and Flutter scheduler, `observe`/`watch`, `ValueNotifier`, and `TextEditingBeacon` fixes).
+
 # 3.1.3
 
 - [Fix] Restore the tracking context when a derived beacon's compute throws, cancel queued derived subscriptions on dispose, and link derived sources by identity.

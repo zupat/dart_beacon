@@ -1,8 +1,14 @@
 import 'package:flutter/widgets.dart';
-import 'package:state_beacon/state_beacon.dart';
+import 'package:lite_ref/lite_ref.dart';
+import 'package:state_beacon_flutter/state_beacon_flutter.dart';
 
 /// Extensions for [ScopedRef] that provide a more convenient way to watch
 /// the beacons in a [BeaconController] instance.
+///
+/// Note: If a [LiteRefScope] dynamically swaps a caller-owned
+/// `overrideWithValue` controller, give the consuming widget a key tied to the
+/// controller's identity (e.g. `ValueKey(controller)`) so Flutter creates a
+/// new [Element] and stops watching beacons from the previous instance.
 extension LiteRefBeaconControllerExt<C extends BeaconController>
     on ScopedRef<C> {
   /// Watches the beacon returned by [selector]
@@ -78,6 +84,11 @@ extension LiteRefBeaconControllerExt<C extends BeaconController>
 /// a [ReadableBeacon].
 extension LiteRefBeaconExt<T> on ScopedRef<ReadableBeacon<T>> {
   /// Watch the beacon inside the ScopedRef and return its value.
+  ///
+  /// Note: If a [LiteRefScope] dynamically swaps a caller-owned
+  /// `overrideWithValue` beacon, give the consuming widget a key tied to the
+  /// beacon's identity (e.g. `ValueKey(beacon)`) so Flutter creates a new
+  /// [Element] and stops watching the previous beacon.
   T watch(BuildContext context) {
     final beacon = of(context);
     return beacon.watch(context);
