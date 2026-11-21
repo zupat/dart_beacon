@@ -106,18 +106,15 @@ extension WidgetUtils<T> on BaseBeacon<T> {
   }) {
     final isObserving = callback != null;
 
-    // Rebuilding with a new `observe` callback must replace the old one, even
-    // though the beacon subscription itself already exists.
-    if (isObserving) {
-      (_observerCallbacks[context] ??= Expando<VoidCallback>())[this] =
-          callback;
-    }
-
     if ($$widgetSubscribers$$.contains(key)) {
+      // Rebuilding with a new `observe` callback must replace the old one, even
+      // though the beacon subscription itself already exists.
+      if (isObserving) {
+        (_observerCallbacks[context] ??= Expando<VoidCallback>())[this] =
+            callback;
+      }
       return;
     }
-
-    $$widgetSubscribers$$.add(key);
 
     final elementRef = WeakReference(context as Element);
     final detachToken = Object();
@@ -145,6 +142,16 @@ extension WidgetUtils<T> on BaseBeacon<T> {
       handleNewValue,
       startNow: false,
     );
+
+    // Register the callback and subscriber key only after `subscribe` succeeds
+    // so a failed call (e.g. on a disposed beacon) does not pollute
+    // `$$widgetSubscribers$$` or `_observerCallbacks`.
+    if (isObserving) {
+      (_observerCallbacks[context] ??= Expando<VoidCallback>())[this] =
+          callback;
+    }
+
+    $$widgetSubscribers$$.add(key);
 
     // coverage:ignore-start
     // clean up if the widget is disposed

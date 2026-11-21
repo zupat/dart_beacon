@@ -190,4 +190,39 @@ void main() {
       shouldThrow.dispose();
     },
   );
+
+  test(
+    'watch on a disposed beacon does not pollute widget subscribers',
+    () {
+      final beacon = Beacon.writable(0)..dispose();
+      final element = StatelessElement(const Placeholder());
+
+      expect(() => beacon.watch(element), throwsA(isA<AssertionError>()));
+      expect(
+        () => beacon.watch(element),
+        throwsA(isA<AssertionError>()),
+        reason: 'A failed watch() on a disposed beacon must not leave its key '
+            'in widget subscribers and hide subsequent assertions.',
+      );
+    },
+  );
+
+  test(
+    'observe on a disposed beacon does not pollute widget subscribers',
+    () {
+      final beacon = Beacon.writable(0)..dispose();
+      final element = StatelessElement(const Placeholder());
+
+      expect(
+        () => beacon.observe(element, (prev, next) {}),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => beacon.observe(element, (prev, next) {}),
+        throwsA(isA<AssertionError>()),
+        reason: 'A failed observe() on a disposed beacon must not leave its '
+            'key in widget subscribers and hide subsequent assertions.',
+      );
+    },
+  );
 }
