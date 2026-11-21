@@ -720,6 +720,78 @@ void main() {
     expect(a.isDisposed, isFalse);
   });
 
+  test('async scheduler recovers after an effect throws', () async {
+    addTearDown(BeaconScheduler.useAsyncScheduler);
+    BeaconScheduler.useAsyncScheduler();
+
+    final a = Beacon.writable(0);
+    final b = Beacon.writable(0);
+    var bRuns = 0;
+    final errors = <Object>[];
+
+    await runZonedGuarded(() async {
+      final d1 = Beacon.effect(() {
+        if (a.value == 1) throw StateError('boom');
+      });
+      final d2 = Beacon.effect(() {
+        b.value;
+        bRuns++;
+      });
+
+      await delay(k10ms);
+      expect(bRuns, 1);
+
+      a.value = 1;
+      await delay(k10ms);
+      expect(errors, isNotEmpty);
+
+      b.value = 1;
+      await delay(k10ms);
+      expect(bRuns, 2);
+
+      d1();
+      d2();
+    }, (e, _) {
+      errors.add(e);
+    });
+  });
+
+  test('custom fps scheduler recovers after an effect throws', () async {
+    addTearDown(BeaconScheduler.useAsyncScheduler);
+    BeaconScheduler.useCustomFpsScheduler(100);
+
+    final a = Beacon.writable(0);
+    final b = Beacon.writable(0);
+    var bRuns = 0;
+    final errors = <Object>[];
+
+    await runZonedGuarded(() async {
+      final d1 = Beacon.effect(() {
+        if (a.value == 1) throw StateError('boom');
+      });
+      final d2 = Beacon.effect(() {
+        b.value;
+        bRuns++;
+      });
+
+      await delay(k10ms * 3);
+      expect(bRuns, 1);
+
+      a.value = 1;
+      await delay(k10ms * 3);
+      expect(errors, isNotEmpty);
+
+      b.value = 1;
+      await delay(k10ms * 3);
+      expect(bRuns, 2);
+
+      d1();
+      d2();
+    }, (e, _) {
+      errors.add(e);
+    });
+  });
+
   test('multiple dispose callbacks should all run once', () {
     final a = Beacon.writable(10);
     var first = 0;
