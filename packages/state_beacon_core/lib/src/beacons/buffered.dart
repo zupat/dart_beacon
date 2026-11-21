@@ -43,6 +43,7 @@ abstract class BufferedBaseBeacon<T> extends ReadableBufferedBeacon<T>
 
   @override
   void dispose() {
+    if (_isDisposed) return;
     clearWrapped();
     _clearBuffer();
     _currentBuffer.dispose();
@@ -112,6 +113,7 @@ class BufferedTimeBeacon<T> extends BufferedBaseBeacon<T> {
 
   @override
   void dispose() {
+    if (_isDisposed) return;
     _timer?.cancel();
     _timer = null;
     super.dispose();

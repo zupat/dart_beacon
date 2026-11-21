@@ -734,6 +734,18 @@ void main() {
     expect(ran, 1);
   });
 
+  test('observer onDispose is only called once on repeated dispose', () {
+    var disposeCount = 0;
+    BeaconObserver.instance = _CountingDisposeObserver(() => disposeCount++);
+    addTearDown(() => BeaconObserver.instance = null);
+
+    final a = Beacon.writable(0);
+    a.dispose();
+    a.dispose();
+
+    expect(disposeCount, 1);
+  });
+
   test('async scheduler recovers after an effect throws', () async {
     addTearDown(BeaconScheduler.useAsyncScheduler);
     BeaconScheduler.useAsyncScheduler();
@@ -846,4 +858,25 @@ void main() {
     // ignore: deprecated_member_use_from_same_package
     expect(a.$$widgetSubscribers$$, isEmpty);
   });
+}
+
+class _CountingDisposeObserver extends LoggingObserver {
+  _CountingDisposeObserver(this._onDispose);
+
+  final void Function() _onDispose;
+
+  @override
+  void onCreate(ReadableBeacon<dynamic> beacon, bool lazy) {}
+
+  @override
+  void onUpdate(ReadableBeacon<dynamic> beacon) {}
+
+  @override
+  void onWatch(String effectName, BaseBeacon<dynamic> beacon) {}
+
+  @override
+  void onStopWatch(String effectName, BaseBeacon<dynamic> beacon) {}
+
+  @override
+  void onDispose(ReadableBeacon<dynamic> beacon) => _onDispose();
 }

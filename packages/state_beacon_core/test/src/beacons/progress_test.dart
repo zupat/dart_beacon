@@ -496,4 +496,17 @@ void main() {
 
     expect(beacon.isDisposed, isTrue);
   });
+
+  test('should be safe to dispose twice and call stop after dispose', () {
+    final beacon = Beacon.progress<double>(
+      interval: k10ms,
+      totalDuration: k10ms * 3,
+      onProgress: (progress) => progress,
+    );
+
+    beacon.dispose();
+    expect(beacon.dispose, returnsNormally);
+    expect(beacon.stop, returnsNormally);
+    expect(beacon.isDisposed, isTrue);
+  });
 }

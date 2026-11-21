@@ -161,7 +161,9 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     _loopTimer?.cancel();
     _loopTimer = null;
     _elapsed = Duration.zero;
-    status.value = ProgressStatus.stopped;
+    if (!status.isDisposed) {
+      status.value = ProgressStatus.stopped;
+    }
   }
 
   /// Pauses emission of values.
@@ -190,6 +192,7 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
 
   @override
   void dispose() {
+    if (_isDisposed) return;
     stop();
     status.dispose();
     super.dispose();
