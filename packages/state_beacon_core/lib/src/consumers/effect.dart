@@ -15,14 +15,17 @@ class Effect with Consumer {
   final Function _compute;
 
   Function? _disposeChild;
+  bool _isDisposed = false;
 
   void _schedule() {
+    if (_isDisposed) return;
     _effectQueue.add(this);
     _flushFn();
   }
 
   @override
   void stale(Status newStatus) {
+    if (_isDisposed) return;
     if (_status < newStatus) {
       final oldStatus = _status;
       _status = newStatus;
@@ -34,7 +37,41 @@ class Effect with Consumer {
   }
 
   @override
+  void updateIfNecessary() {
+    if (_isDisposed) return;
+    try {
+      super.updateIfNecessary();
+    } finally {
+      _status = CLEAN;
+    }
+  }
+
+  void _runCleanup(Function cleanup) {
+    final prevConsumer = currentConsumer;
+    currentConsumer = null;
+    try {
+      // ignore: avoid_dynamic_calls
+      cleanup();
+    } finally {
+      currentConsumer = prevConsumer;
+    }
+  }
+
+  @override
   void update() {
+    if (_isDisposed) return;
+
+    // Clear and run the previous cleanup untracked before tracking the next
+    // run so reads inside cleanup are not tracked and a stale cleanup cannot
+    // be invoked twice if _compute throws or returns a non-Function.
+    final disposeChild = _disposeChild;
+    _disposeChild = null;
+    if (disposeChild != null) {
+      _runCleanup(disposeChild);
+    }
+
+    if (_isDisposed) return;
+
     final prevConsumer = currentConsumer;
     final prevGets = currentGets;
     final prevGetsIndex = currentGetsIndex;
@@ -43,58 +80,69 @@ class Effect with Consumer {
     currentGets = [];
     currentGetsIndex = 0;
 
-    // ignore: avoid_dynamic_calls
-    _disposeChild?.call();
+    try {
+      // ignore: avoid_dynamic_calls
+      final cleanup = _compute();
 
-    // ignore: avoid_dynamic_calls
-    final cleanup = _compute();
-
-    if (cleanup is Function) {
-      _disposeChild = cleanup;
-    }
-
-    if (currentGets.isNotEmpty) {
-      stopWatchingAllAfter(currentGetsIndex);
-
-      if (sources.isNotEmpty && currentGetsIndex > 0) {
-        sources.length = currentGetsIndex + currentGets.length;
-        for (var i = 0; i < currentGets.length; i++) {
-          sources[currentGetsIndex + i] = currentGets[i];
+      if (_isDisposed) {
+        if (cleanup is Function) {
+          // ignore: avoid_dynamic_calls
+          cleanup();
         }
-      } else {
-        sources = currentGets;
+        return;
       }
 
-      // Add ourselves to the end of the parent .observers array
-      for (var i = currentGetsIndex; i < sources.length; i++) {
-        final source = sources[i]!;
-        source._observers.add(this);
+      if (cleanup is Function) {
+        _disposeChild = cleanup;
       }
-    } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
-      stopWatchingAllAfter(currentGetsIndex);
-      sources.length = currentGetsIndex;
+
+      if (currentGets.isNotEmpty) {
+        stopWatchingAllAfter(currentGetsIndex);
+
+        if (sources.isNotEmpty && currentGetsIndex > 0) {
+          sources.length = currentGetsIndex + currentGets.length;
+          for (var i = 0; i < currentGets.length; i++) {
+            sources[currentGetsIndex + i] = currentGets[i];
+          }
+        } else {
+          sources = currentGets;
+        }
+
+        // Add ourselves to the end of the parent .observers array
+        for (var i = currentGetsIndex; i < sources.length; i++) {
+          final source = sources[i]!;
+          source._observers.add(this);
+        }
+      } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
+        stopWatchingAllAfter(currentGetsIndex);
+        sources.length = currentGetsIndex;
+      }
+    } finally {
+      currentGets = prevGets;
+      currentGetsIndex = prevGetsIndex;
+      currentConsumer = prevConsumer;
+
+      // We've rerun with the latest values from all of our sources (or failed
+      // and need to remain responsive to future updates).
+      _status = CLEAN;
     }
-
-    currentGets = prevGets;
-    currentGetsIndex = prevGetsIndex;
-    currentConsumer = prevConsumer;
-
-    // We've rerun with the latest values from all of our sources.
-    // This means that we no longer need to update until a signal changes
-    _status = CLEAN;
   }
 
   /// Disposes the effect.
   @override
   void dispose() {
-    // ignore: avoid_dynamic_calls
-    _disposeChild?.call();
-    _effectQueue.remove(this);
+    if (_isDisposed) return;
+    _isDisposed = true;
+    final disposeChild = _disposeChild;
+    _disposeChild = null;
+    if (disposeChild != null) {
+      _runCleanup(disposeChild);
+    }
+    _effectQueue.removeWhere((consumer) => identical(consumer, this));
     // remove ourselves from the .observers list of all sources
     for (final source in sources) {
       source!._removeObserver(this);
     }
     sources.clear();
-    _disposeChild = null;
   }
 }

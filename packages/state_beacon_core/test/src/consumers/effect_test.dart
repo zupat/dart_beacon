@@ -448,4 +448,134 @@ void main() {
 
     expect(a.listenersCount, 0);
   });
+
+  test('should restore tracking context and recover after throwing', () {
+    final trigger = Beacon.writable(0);
+    final unrelated = Beacon.writable(10);
+    final seen = <int>[];
+
+    final dispose = Beacon.effect(() {
+      final v = trigger.value;
+      if (v == 1) throw StateError('effect failed');
+      seen.add(v);
+    });
+
+    BeaconScheduler.flush();
+    expect(seen, [0]);
+
+    trigger.value = 1;
+    expect(BeaconScheduler.flush, throwsStateError);
+
+    // Reading an unrelated beacon after a failed effect must not attach it
+    // to a leaked currentConsumer.
+    var watched = 0;
+    BeaconObserver.instance = _WatchCountingObserver(() => watched++);
+    addTearDown(() => BeaconObserver.instance = null);
+    unrelated.value;
+    expect(watched, 0);
+
+    // Subsequent valid updates should still re-run the effect.
+    trigger.value = 2;
+    BeaconScheduler.flush();
+    expect(seen, [0, 2]);
+
+    dispose();
+  });
+
+  test('should not double-invoke stale cleanup when next run returns null', () {
+    final flag = Beacon.writable(true);
+    var cleanups = 0;
+
+    final dispose = Beacon.effect(() {
+      if (flag.value) {
+        return () => cleanups++;
+      }
+      return null;
+    });
+
+    BeaconScheduler.flush();
+    expect(cleanups, 0);
+
+    flag.value = false;
+    BeaconScheduler.flush();
+    expect(cleanups, 1);
+
+    dispose();
+    expect(cleanups, 1);
+  });
+
+  test('should not track beacons read inside cleanup callback', () {
+    final a = Beacon.writable(0);
+    final secret = Beacon.writable(100);
+    var runs = 0;
+
+    final dispose = Beacon.effect(() {
+      runs++;
+      a.value;
+      return () {
+        secret.value;
+      };
+    });
+
+    BeaconScheduler.flush();
+    expect(runs, 1);
+    expect(secret.listenersCount, 0);
+
+    a.value = 1;
+    BeaconScheduler.flush();
+    expect(runs, 2);
+    expect(secret.listenersCount, 0);
+
+    secret.value = 200;
+    BeaconScheduler.flush();
+    expect(runs, 2);
+
+    dispose();
+  });
+
+  test('should not re-subscribe when disposing itself during compute', () {
+    final a = Beacon.writable(1);
+    var runs = 0;
+    var cleanupRan = 0;
+    late void Function() dispose;
+
+    dispose = Beacon.effect(() {
+      runs++;
+      if (a.value == 1) {
+        dispose();
+        return () => cleanupRan++;
+      }
+      return null;
+    });
+
+    BeaconScheduler.flush();
+    expect(runs, 1);
+    expect(cleanupRan, 1);
+    expect(a.listenersCount, 0);
+
+    a.value = 2;
+    BeaconScheduler.flush();
+    expect(runs, 1);
+  });
+}
+
+class _WatchCountingObserver extends LoggingObserver {
+  _WatchCountingObserver(this._onWatch);
+
+  final void Function() _onWatch;
+
+  @override
+  void onCreate(ReadableBeacon<dynamic> beacon, bool lazy) {}
+
+  @override
+  void onUpdate(ReadableBeacon<dynamic> beacon) {}
+
+  @override
+  void onWatch(String effectName, BaseBeacon<dynamic> beacon) => _onWatch();
+
+  @override
+  void onStopWatch(String effectName, BaseBeacon<dynamic> beacon) {}
+
+  @override
+  void onDispose(ReadableBeacon<dynamic> beacon) {}
 }
