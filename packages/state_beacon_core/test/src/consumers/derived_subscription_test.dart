@@ -405,4 +405,78 @@ void main() {
 
     expect(received, isEmpty);
   });
+
+  test(
+      'should receive updates when subscribing with startNow=false to a dirty '
+      'non-empty derived', () {
+    final a = Beacon.writable(1);
+    final b = Beacon.derived(() => a.value * 2);
+    final c = Beacon.derived(() => b.value + 1);
+
+    // Initialize both derived beacons so they are non-empty.
+    expect(c.value, 3);
+
+    // Dirty the chain before subscribing.
+    a.value = 2;
+
+    final receivedB = <int>[];
+    final receivedC = <int>[];
+    final unsubB = b.subscribe(receivedB.add, startNow: false);
+    final unsubC = c.subscribe(receivedC.add, startNow: false);
+
+    BeaconScheduler.flush();
+    expect(receivedB, isEmpty);
+    expect(receivedC, isEmpty);
+
+    a.value = 3;
+    BeaconScheduler.flush();
+    expect(receivedB, [6]);
+    expect(receivedC, [7]);
+
+    a.value = 4;
+    BeaconScheduler.flush();
+    expect(receivedB, [6, 8]);
+    expect(receivedC, [7, 9]);
+
+    unsubB();
+    unsubC();
+  });
+
+  test(
+      'should deliver update when startNow=false derived is read again after '
+      'a source change before the first flush', () {
+    final a = Beacon.writable(1);
+    final d = Beacon.derived(() => a.value * 2);
+    final received = <int>[];
+
+    final unsub = d.subscribe(received.add, startNow: false);
+    expect(d.value, 2);
+
+    a.value = 2;
+    expect(d.value, 4);
+
+    BeaconScheduler.flush();
+    expect(received, [4]);
+
+    unsub();
+  });
+
+  test(
+      'should not emit when startNow=false derived recomputes to the same '
+      'value before the first flush', () {
+    final a = Beacon.writable(2);
+    final isEven = Beacon.derived(() => a.value.isEven);
+    final received = <bool>[];
+
+    final unsub = isEven.subscribe(received.add, startNow: false);
+    expect(isEven.value, isTrue);
+
+    a.value = 4;
+    expect(isEven.value, isTrue);
+
+    BeaconScheduler.flush();
+    expect(received, isEmpty);
+
+    unsub();
+  });
 }

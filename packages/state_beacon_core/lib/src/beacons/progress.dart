@@ -94,6 +94,7 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   StreamSubscription<dynamic>? _subscription;
   Timer? _loopTimer;
   Duration _elapsed = Duration.zero;
+  bool _pausedDuringLoopGap = false;
 
   /// Starts emitting values periodically.
   ///
@@ -106,6 +107,7 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     _subscription?.cancel();
     _loopTimer?.cancel();
     _loopTimer = null;
+    _pausedDuringLoopGap = false;
 
     // Reset elapsed time for a fresh start.
     _elapsed = Duration.zero;
@@ -125,7 +127,12 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
       final progress = _computeProgress();
 
       if (onProgress != null) {
-        _setValue(onProgress!(progress));
+        final progressValue = onProgress!(progress);
+
+        // onProgress may have disposed the beacon.
+        if (_isDisposed) return;
+
+        _setValue(progressValue);
       }
 
       if (progress >= 1.0) {
@@ -138,14 +145,18 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
           _setValue(doneValue);
         }
 
-        // onDone may have stopped (or paused/disposed) the progression.
+        // onDone/onProgress may have stopped (or paused/disposed) the
+        // progression.
         if (_isDisposed || status.peek() != ProgressStatus.running) {
           return;
         }
 
         if (loop) {
-          // Restart after a delay to allow listeners to process the 1.0
-          // value. Keep a handle so stop() can cancel the restart.
+          // Stop the periodic stream before scheduling the restart delay so it
+          // cannot fire another 1.0 tick before _loopTimer triggers start().
+          _subscription?.cancel();
+          _subscription = null;
+          _loopTimer?.cancel();
           _loopTimer = Timer(interval, start);
         } else {
           stop();
@@ -160,21 +171,36 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     _subscription = null;
     _loopTimer?.cancel();
     _loopTimer = null;
+    _pausedDuringLoopGap = false;
     _elapsed = Duration.zero;
-    status.value = ProgressStatus.stopped;
+    if (!status.isDisposed) {
+      status.value = ProgressStatus.stopped;
+    }
   }
 
   /// Pauses emission of values.
   void pause() {
+    if (_isDisposed || status.peek() != ProgressStatus.running) return;
+
     if (_subscription != null) {
       _subscription!.pause();
+      status.value = ProgressStatus.paused;
+    } else if (_loopTimer != null) {
+      _loopTimer!.cancel();
+      _loopTimer = null;
+      _pausedDuringLoopGap = true;
       status.value = ProgressStatus.paused;
     }
   }
 
   /// Resumes emission of values.
   void resume() {
-    if (_subscription != null) {
+    if (_isDisposed || status.peek() != ProgressStatus.paused) return;
+
+    if (_pausedDuringLoopGap) {
+      _pausedDuringLoopGap = false;
+      start();
+    } else if (_subscription != null) {
       _subscription!.resume();
       status.value = ProgressStatus.running;
     }
@@ -190,6 +216,7 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
 
   @override
   void dispose() {
+    if (_isDisposed) return;
     stop();
     status.dispose();
     super.dispose();

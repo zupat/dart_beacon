@@ -9,8 +9,20 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
 
   final T Function() _compute;
 
+  bool _hadError = false;
+
   @override
   bool get _isDerived => true;
+
+  @override
+  void updateIfNecessary() {
+    try {
+      super.updateIfNecessary();
+    } catch (_) {
+      _hadError = true;
+      rethrow;
+    }
+  }
 
   @override
   T peek() {
@@ -41,7 +53,9 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
 
   @override
   void stale(Status newStatus) {
-    if (_status < newStatus) {
+    if (_isDisposed) return;
+    if (_status < newStatus || _hadError) {
+      _hadError = false;
       _status = newStatus;
 
       for (var i = 0; i < _observers.length; i++) {
@@ -67,6 +81,7 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
 
     try {
       _value = _compute();
+      _hadError = false;
       if (_isEmpty) {
         _initialValue = _value;
         didUpdate = true;
@@ -112,6 +127,17 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
       // We've rerun with the latest values from all of our sources.
       // This means that we no longer need to update until a signal changes
       _status = CLEAN;
+    } catch (_) {
+      _hadError = true;
+      // If the very first run failed after reading one or more sources,
+      // subscribe to them so subsequent source changes can trigger recovery.
+      if (sources.isEmpty && currentGets.isNotEmpty) {
+        sources = currentGets;
+        for (var i = 0; i < sources.length; i++) {
+          sources[i]!._observers.add(this);
+        }
+      }
+      rethrow;
     } finally {
       // Always restore the enclosing capture context, even when _compute
       // throws. Otherwise the globals keep pointing at this beacon and any
@@ -134,6 +160,7 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
 
   @override
   void dispose() {
+    if (_isDisposed) return;
     for (final source in sources) {
       source!._removeObserver(this);
     }

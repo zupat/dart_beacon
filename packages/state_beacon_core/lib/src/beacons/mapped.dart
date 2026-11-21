@@ -19,4 +19,11 @@ class _MappedBeacon<I, O> extends ReadableBeacon<O> with BeaconWrapper<I, O> {
   void _onNewValueFromWrapped(I value) {
     _setValue(mapFN(value), force: true);
   }
+
+  @override
+  void dispose() {
+    if (_isDisposed) return;
+    clearWrapped();
+    super.dispose();
+  }
 }

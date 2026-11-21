@@ -19,7 +19,7 @@ class ListBeacon<E> extends WritableBeacon<List<E>> {
   /// both for getting and setting the value.
   /// ```
   set first(E val) {
-    value.first = val;
+    _value.first = val;
     _setValue(_value, force: true);
   }
 
@@ -31,7 +31,7 @@ class ListBeacon<E> extends WritableBeacon<List<E>> {
   /// A `list.last` is equivalent to `theList[theList.length - 1]`,
   /// both for getting and setting the value.
   set last(E val) {
-    value.last = val;
+    _value.last = val;
     _setValue(_value, force: true);
   }
 
@@ -56,7 +56,7 @@ class ListBeacon<E> extends WritableBeacon<List<E>> {
   /// numbers.length = 5; // Throws, cannot add `null`s.
   /// ```
   set length(int value) {
-    this.value.length = value;
+    _value.length = value;
     _setValue(_value, force: true);
   }
 

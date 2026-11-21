@@ -30,8 +30,16 @@ class DebouncedBeacon<T> extends WritableBeacon<T> {
   }
 
   @override
+  void reset({bool force = false}) {
+    _debounceTimer?.cancel();
+    _debounceTimer = null;
+    super.reset(force: force);
+  }
+
+  @override
   void dispose() {
     _debounceTimer?.cancel();
+    _debounceTimer = null;
     super.dispose();
   }
 }

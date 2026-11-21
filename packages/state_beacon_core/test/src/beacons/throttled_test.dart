@@ -250,4 +250,49 @@ void main() {
 
     expect(t.value, 10);
   });
+
+  test(
+      'setDuration(unblock: true) with dropBlocked=false preserves FIFO order '
+      'for buffered values', () async {
+    final beacon = Beacon.throttled(
+      0,
+      duration: k10ms * 5,
+      dropBlocked: false,
+    );
+    final seen = <int>[];
+    beacon.subscribeSynchronously(seen.add, startNow: false);
+
+    beacon.set(1);
+    beacon.set(2);
+    beacon.setDuration(k10ms);
+    beacon.set(3);
+
+    await delay(k10ms * 3);
+
+    expect(seen, [1, 2, 3]);
+    beacon.dispose();
+  });
+
+  test('setDuration(unblock: false) reschedules the active timer', () async {
+    final beacon = Beacon.throttled(
+      0,
+      duration: const Duration(seconds: 5),
+      dropBlocked: false,
+    );
+
+    beacon.set(1);
+    beacon.set(2);
+    beacon.setDuration(k10ms, unblock: false);
+
+    expect(beacon.isBlocked, isTrue);
+    expect(beacon.value, 1);
+
+    await delay(k10ms * 2);
+    expect(beacon.value, 2);
+
+    await delay(k10ms * 2);
+    expect(beacon.isBlocked, isFalse);
+
+    beacon.dispose();
+  });
 }

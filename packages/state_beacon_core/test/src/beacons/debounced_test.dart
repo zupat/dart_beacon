@@ -98,4 +98,17 @@ void main() {
     BeaconScheduler.flush(); // allow c to capture first value
     expect(c.value, 5);
   });
+
+  test('reset should cancel pending debounced timer', () async {
+    final beacon = Beacon.debounced(0, duration: k10ms * 2);
+
+    beacon.value = 10;
+    beacon.reset();
+    expect(beacon.value, 0);
+
+    await delay(k10ms * 3);
+    expect(beacon.value, 0);
+
+    beacon.dispose();
+  });
 }

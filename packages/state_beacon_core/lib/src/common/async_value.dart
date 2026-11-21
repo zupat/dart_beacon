@@ -109,11 +109,15 @@ sealed class AsyncValue<T> {
 
     try {
       final data = AsyncData(await future());
-      beacon?.set(data);
+      if (beacon != null && !beacon.isDisposed) {
+        beacon.set(data);
+      }
       return data;
     } catch (e, s) {
       final error = AsyncError<T>(e, s)..setLastData(oldData);
-      beacon?.set(error);
+      if (beacon != null && !beacon.isDisposed) {
+        beacon.set(error);
+      }
       return error;
     }
   }

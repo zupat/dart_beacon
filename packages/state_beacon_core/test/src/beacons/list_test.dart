@@ -187,4 +187,21 @@ void main() {
 
     expect(called, 1);
   });
+
+  test('first=, last=, and length= should not track ListBeacon as dependency',
+      () {
+    final nums = Beacon.list<int>([1, 2, 3]);
+
+    final dispose = Beacon.effect(() {
+      nums.first = 10;
+      nums.last = 30;
+      nums.length = 2;
+    });
+
+    BeaconScheduler.flush();
+    expect(nums.peek(), [10, 2]);
+    expect(nums.listenersCount, 0);
+
+    dispose();
+  });
 }

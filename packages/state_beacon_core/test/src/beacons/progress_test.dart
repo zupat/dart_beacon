@@ -496,4 +496,99 @@ void main() {
 
     expect(beacon.isDisposed, isTrue);
   });
+
+  test('should be safe to dispose twice and call stop after dispose', () {
+    final beacon = Beacon.progress<double>(
+      interval: k10ms,
+      totalDuration: k10ms * 3,
+      onProgress: (progress) => progress,
+    );
+
+    beacon.dispose();
+    expect(beacon.dispose, returnsNormally);
+    expect(beacon.stop, returnsNormally);
+    expect(beacon.isDisposed, isTrue);
+  });
+
+  test('should not write after onProgress disposes the beacon', () async {
+    late ProgressBeacon<double> beacon;
+    beacon = Beacon.progress<double>(
+      interval: k10ms,
+      totalDuration: k10ms * 5,
+      onProgress: (progress) {
+        if (progress > 0) beacon.dispose();
+        return progress;
+      },
+    );
+
+    await delay(k10ms * 3);
+    expect(beacon.isDisposed, isTrue);
+  });
+
+  test('should stay paused when pause is called during loop gap and resume',
+      () async {
+    final beacon = Beacon.progress<double>(
+      interval: k10ms * 2,
+      totalDuration: k10ms * 2,
+      onProgress: (progress) => progress,
+      loop: true,
+    );
+
+    // Wait until progress reaches 1.0 and _loopTimer is pending.
+    await delay(k10ms * 2.5);
+    expect(beacon.peek(), 1.0);
+
+    beacon.pause();
+    expect(beacon.status.peek(), ProgressStatus.paused);
+
+    await delay(k10ms * 4);
+    expect(beacon.status.peek(), ProgressStatus.paused);
+    expect(beacon.peek(), 1.0);
+
+    beacon.resume();
+    expect(beacon.status.peek(), ProgressStatus.running);
+    expect(beacon.peek(), 0.0);
+
+    beacon.dispose();
+  });
+
+  test('double pause followed by single resume should resume progression',
+      () async {
+    final beacon = Beacon.progress<double>(
+      interval: k10ms,
+      totalDuration: k10ms * 10,
+      onProgress: (progress) => progress,
+    );
+
+    await delay(k10ms * 1.5);
+    beacon.pause();
+    beacon.pause();
+    final pausedValue = beacon.peek();
+
+    beacon.resume();
+    expect(beacon.status.peek(), ProgressStatus.running);
+
+    await delay(k10ms * 3);
+    expect(beacon.peek(), greaterThan(pausedValue));
+
+    beacon.dispose();
+  });
+
+  test('loop should not double-fire onDone before restarting', () async {
+    var doneCount = 0;
+    final beacon = Beacon.progress<int>(
+      interval: k10ms * 2,
+      totalDuration: k10ms * 2,
+      initialValue: 0,
+      onDone: () => ++doneCount,
+      loop: true,
+    );
+
+    // First cycle completes at 20ms, loop delay is 20ms, next finishes at
+    // 60ms. At 45ms only 1 completion should have happened (not 2).
+    await delay(k10ms * 4.5);
+    expect(doneCount, 1);
+
+    beacon.dispose();
+  });
 }

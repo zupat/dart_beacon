@@ -73,8 +73,14 @@ void _asyncScheduler() {
   if (!_flushing) {
     _flushing = true;
     Future.microtask(() {
-      _flushEffects();
-      _flushing = false;
+      try {
+        _flushEffects();
+      } finally {
+        _flushing = false;
+        if (_effectQueue.isNotEmpty) {
+          _flushFn();
+        }
+      }
     });
   }
 }
@@ -87,8 +93,14 @@ void Function() _customFPS(int fps) {
     if (_flushing) return;
     _flushing = true;
     Future.delayed(duration, () {
-      _flushEffects();
-      _flushing = false;
+      try {
+        _flushEffects();
+      } finally {
+        _flushing = false;
+        if (_effectQueue.isNotEmpty) {
+          _flushFn();
+        }
+      }
     });
   };
 }
@@ -97,8 +109,14 @@ void _sixtyfpsScheduler() {
   if (_flushing) return;
   _flushing = true;
   Future.delayed(_k16ms, () {
-    _flushEffects();
-    _flushing = false;
+    try {
+      _flushEffects();
+    } finally {
+      _flushing = false;
+      if (_effectQueue.isNotEmpty) {
+        _flushFn();
+      }
+    }
   });
 }
 

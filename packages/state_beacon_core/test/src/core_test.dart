@@ -718,6 +718,105 @@ void main() {
 
     expect(b.isDisposed, isTrue);
     expect(a.isDisposed, isFalse);
+    expect(a.listenersCount, 0);
+  });
+
+  test('onDispose callback can unregister itself during dispose', () {
+    final a = Beacon.writable(0);
+    var ran = 0;
+    late void Function() remove;
+
+    remove = a.onDispose(() {
+      ran++;
+      remove();
+    });
+
+    expect(a.dispose, returnsNormally);
+    expect(ran, 1);
+  });
+
+  test('observer onDispose is only called once on repeated dispose', () {
+    var disposeCount = 0;
+    BeaconObserver.instance = _CountingDisposeObserver(() => disposeCount++);
+    addTearDown(() => BeaconObserver.instance = null);
+
+    final a = Beacon.writable(0);
+    a.dispose();
+    a.dispose();
+
+    expect(disposeCount, 1);
+  });
+
+  test('async scheduler recovers after an effect throws', () async {
+    addTearDown(BeaconScheduler.useAsyncScheduler);
+    BeaconScheduler.useAsyncScheduler();
+
+    final a = Beacon.writable(0);
+    final b = Beacon.writable(0);
+    var bRuns = 0;
+    final errors = <Object>[];
+
+    await runZonedGuarded(() async {
+      final d1 = Beacon.effect(() {
+        if (a.value == 1) throw StateError('boom');
+      });
+      final d2 = Beacon.effect(() {
+        b.value;
+        bRuns++;
+      });
+
+      await delay(k10ms);
+      expect(bRuns, 1);
+
+      a.value = 1;
+      await delay(k10ms);
+      expect(errors, isNotEmpty);
+
+      b.value = 1;
+      await delay(k10ms);
+      expect(bRuns, 2);
+
+      d1();
+      d2();
+    }, (e, _) {
+      errors.add(e);
+    });
+  });
+
+  test('custom fps scheduler recovers after an effect throws', () async {
+    addTearDown(BeaconScheduler.useAsyncScheduler);
+    BeaconScheduler.useCustomFpsScheduler(100);
+
+    final a = Beacon.writable(0);
+    final b = Beacon.writable(0);
+    var bRuns = 0;
+    final errors = <Object>[];
+
+    await runZonedGuarded(() async {
+      final d1 = Beacon.effect(() {
+        if (a.value == 1) throw StateError('boom');
+      });
+      final d2 = Beacon.effect(() {
+        b.value;
+        bRuns++;
+      });
+
+      await delay(k10ms * 3);
+      expect(bRuns, 1);
+
+      a.value = 1;
+      await delay(k10ms * 3);
+      expect(errors, isNotEmpty);
+
+      b.value = 1;
+      await delay(k10ms * 3);
+      expect(bRuns, 2);
+
+      d1();
+      d2();
+    }, (e, _) {
+      errors.add(e);
+    });
   });
 
   test('multiple dispose callbacks should all run once', () {
@@ -760,4 +859,25 @@ void main() {
     // ignore: deprecated_member_use_from_same_package
     expect(a.$$widgetSubscribers$$, isEmpty);
   });
+}
+
+class _CountingDisposeObserver extends LoggingObserver {
+  _CountingDisposeObserver(this._onDispose);
+
+  final void Function() _onDispose;
+
+  @override
+  void onCreate(ReadableBeacon<dynamic> beacon, bool lazy) {}
+
+  @override
+  void onUpdate(ReadableBeacon<dynamic> beacon) {}
+
+  @override
+  void onWatch(String effectName, BaseBeacon<dynamic> beacon) {}
+
+  @override
+  void onStopWatch(String effectName, BaseBeacon<dynamic> beacon) {}
+
+  @override
+  void onDispose(ReadableBeacon<dynamic> beacon) => _onDispose();
 }

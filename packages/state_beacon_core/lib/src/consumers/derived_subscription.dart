@@ -8,6 +8,16 @@ class DerivedSubscription<T> implements Consumer {
     this.fn, {
     required this.startNow,
   }) {
+    // If the derived beacon already has a value but is stale (DIRTY/CHECK)
+    // when subscribing with startNow=false, bring it to CLEAN first so future
+    // upstream changes are not swallowed by DerivedBeacon.stale()'s guard.
+    if (!startNow &&
+        !producer.isEmpty &&
+        producer._status != CLEAN &&
+        !producer._hadError) {
+      producer.updateIfNecessary();
+    }
+
     _forceFirstRun = !startNow && producer.isEmpty;
     if (startNow || _forceFirstRun) {
       _schedule();
@@ -29,6 +39,12 @@ class DerivedSubscription<T> implements Consumer {
   /// its sources. Such a run must not invoke [fn] unless it would otherwise
   /// swallow a change that landed before the flush.
   bool _forceFirstRun = false;
+
+  /// Baseline value captured when a source changes after [producer] was
+  /// evaluated synchronously during a pending [_forceFirstRun], before the
+  /// first flush.
+  bool _hasBaseline = false;
+  T? _baselineValue;
 
   bool _isDisposed = false;
 
@@ -69,6 +85,10 @@ class DerivedSubscription<T> implements Consumer {
       // when derived changes again and puts us in the CHECK state
       // we are DIRTY and never got scheduled.
       // check PR#171 for full explanation
+      if (_forceFirstRun && !_hasBaseline && !producer.isEmpty) {
+        _hasBaseline = true;
+        _baselineValue = producer._value;
+      }
       _schedule();
     }
   }
@@ -77,29 +97,36 @@ class DerivedSubscription<T> implements Consumer {
   void updateIfNecessary() {
     if (_isDisposed) return;
 
-    // Check dependent sources (only for DerivedBeacon)
-    if (_status == CHECK) {
-      producer.updateIfNecessary();
-    }
+    try {
+      // Check dependent sources (only for DerivedBeacon)
+      if (_status == CHECK) {
+        producer.updateIfNecessary();
+      }
 
-    // Update if still dirty
-    if (_status == DIRTY) {
-      update();
+      // Update if still dirty
+      if (_status == DIRTY) {
+        update();
+      }
+    } finally {
+      _status = CLEAN;
     }
-
-    _status = CLEAN;
   }
 
   @override
   void update() {
     final forcedFirstRun = _forceFirstRun;
+    final hasBaseline = _hasBaseline;
+    final baselineValue = _baselineValue;
     _forceFirstRun = false;
+    _hasBaseline = false;
+    _baselineValue = null;
 
     // Snapshot before evaluating, since peek() may fill an empty producer.
     // Only the forced first run needs this, so avoid touching _value
     // on every normal update.
-    final hadValue = forcedFirstRun && !producer.isEmpty;
-    final oldValue = hadValue ? producer._value : null;
+    final hadValue = forcedFirstRun && (hasBaseline || !producer.isEmpty);
+    final oldValue =
+        hasBaseline ? baselineValue : (hadValue ? producer._value : null);
 
     // Always evaluate the producer. This is what returns it to CLEAN, and a
     // CLEAN producer is required for its stale() to forward any future

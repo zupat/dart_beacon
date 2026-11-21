@@ -6,7 +6,7 @@ part of '../producer.dart';
 
 /// A utility mixin for beacons that consume other beacons.
 mixin BeaconWrapper<InputT, OutputT> on ReadableBeacon<OutputT> {
-  final _wrapped = <int, VoidCallback>{};
+  final _wrapped = Map<ReadableBeacon<dynamic>, VoidCallback>.identity();
 
   /// Disposes all currently wrapped beacons
   void clearWrapped() {

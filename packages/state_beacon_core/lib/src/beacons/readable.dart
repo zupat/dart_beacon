@@ -45,6 +45,7 @@ class ReadableBeacon<T> extends Producer<T> {
 
   @override
   void dispose() {
+    if (_isDisposed) return;
     _unsubFromSelf?.call();
     _controller?.close();
     _controller = null;

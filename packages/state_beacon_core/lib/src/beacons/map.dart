@@ -151,8 +151,14 @@ class MapBeacon<K, V> extends WritableBeacon<Map<K, V>> {
   /// ```
   /// Calling [ifAbsent] must not add or remove keys from the map.
   V? putIfAbsent(K key, V Function() ifAbsent) {
-    final result = _value.putIfAbsent(key, ifAbsent);
-    _setValue(_value, force: true);
+    var added = false;
+    final result = _value.putIfAbsent(key, () {
+      added = true;
+      return ifAbsent();
+    });
+    if (added) {
+      _setValue(_value, force: true);
+    }
     return result;
   }
 

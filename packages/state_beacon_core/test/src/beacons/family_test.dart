@@ -249,4 +249,38 @@ void main() {
 
     expect(ran, 5);
   });
+
+  test('entries subscribers continue receiving updates after clear()', () {
+    final family = Beacon.family((int arg) => Beacon.writable('$arg'));
+    final lengths = <int>[];
+
+    final unsub = family.entries.subscribe((list) => lengths.add(list.length));
+    BeaconScheduler.flush();
+
+    family(1);
+    BeaconScheduler.flush();
+
+    family.clear();
+    BeaconScheduler.flush();
+
+    family(2);
+    BeaconScheduler.flush();
+
+    expect(lengths, [0, 1, 0, 1]);
+    unsub();
+  });
+
+  test('clear() resets _clearing flag even if a dispose callback throws', () {
+    final family = Beacon.family((int arg) => Beacon.writable('$arg'));
+    final b1 = family(1);
+    b1.onDispose(() => throw StateError('dispose error'));
+
+    expect(family.clear, throwsStateError);
+
+    final b2 = family(2);
+    expect(family.containsKey(2), isTrue);
+
+    b2.dispose();
+    expect(family.containsKey(2), isFalse);
+  });
 }

@@ -104,4 +104,20 @@ void main() {
 
     expect(beacon.history, isEmpty);
   });
+
+  test('writing inside an effect should not track UndoRedoBeacon as dependency',
+      () {
+    final undoRedo = Beacon.undoRedo<int>(0);
+    final trigger = Beacon.writable<int>(1);
+
+    final dispose = Beacon.effect(() {
+      undoRedo.value = trigger.value;
+    });
+
+    BeaconScheduler.flush();
+    expect(undoRedo.peek(), 1);
+    expect(undoRedo.listenersCount, 0);
+
+    dispose();
+  });
 }

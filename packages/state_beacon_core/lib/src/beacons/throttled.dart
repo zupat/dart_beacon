@@ -70,6 +70,26 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
     _timer = Timer.periodic(_duration!, _processBuffer);
   }
 
+  @override
+  void setDuration(Duration newDuration, {bool unblock = true}) {
+    super.setDuration(newDuration, unblock: unblock);
+
+    if (unblock) {
+      _timer?.cancel();
+      _timer = null;
+      if (_buffer.isNotEmpty) {
+        final pending = List<(T, bool)>.of(_buffer);
+        _buffer.clear();
+        for (final (bufferedValue, force) in pending) {
+          _setValue(bufferedValue, force: force);
+        }
+      }
+    } else if (_timer != null && _timer!.isActive) {
+      _timer!.cancel();
+      _timer = Timer.periodic(_duration!, _processBuffer);
+    }
+  }
+
   void _cleanUp() {
     _timer?.cancel();
     _timer = null;

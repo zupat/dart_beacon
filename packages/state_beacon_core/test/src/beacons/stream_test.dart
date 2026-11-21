@@ -477,4 +477,89 @@ void main() {
 
     expect(called, 1);
   });
+
+  test('next() and subscribe(startNow: false) should wake a sleeping stream',
+      () async {
+    final controller = StreamController<int>.broadcast();
+    addTearDown(controller.close);
+
+    final s = Beacon.stream(() => controller.stream);
+    final unsub = Beacon.effect(() => s.value);
+    BeaconScheduler.flush();
+    unsub();
+    await delay(k10ms); // now asleep
+
+    final nextFuture = s.next();
+    BeaconScheduler.flush();
+    controller.add(42);
+
+    final result = await nextFuture.timeout(k10ms * 5);
+    expect(result, AsyncData(42));
+    s.dispose();
+  });
+
+  test('toFuture() should wake a sleeping stream when completer already exists',
+      () async {
+    var listens = 0;
+    final controller = StreamController<int>.broadcast(
+      onListen: () => listens++,
+    );
+    addTearDown(controller.close);
+
+    final s = Beacon.stream(() => controller.stream);
+    final unsub = Beacon.effect(() => s.value);
+    BeaconScheduler.flush();
+    controller.add(1);
+    expect(await s.toFuture(), 1);
+    expect(listens, 1);
+
+    unsub();
+    await delay(k10ms); // now asleep
+
+    final nextFuture = s.toFuture();
+    BeaconScheduler.flush();
+    expect(listens, 2);
+    controller.add(2);
+    expect(await nextFuture, 2);
+    s.dispose();
+  });
+
+  test('should not emit unhandled zone error when stream errors after toFuture',
+      () async {
+    final errors = <Object>[];
+
+    await runZonedGuarded(() async {
+      final controller = StreamController<int>();
+      final s = Beacon.stream(() => controller.stream, shouldSleep: false);
+      BeaconScheduler.flush();
+      controller.add(1);
+      expect(await s.toFuture(), 1);
+
+      controller.addError(Exception('stream boom'));
+      await delay(k10ms);
+      expect(s.isError, isTrue);
+
+      s.dispose();
+      await controller.close();
+    }, (e, _) {
+      errors.add(e);
+    });
+
+    expect(errors, isEmpty);
+  });
+
+  test('should ignore stream error emitted while disposing', () async {
+    final controller = StreamController<int>(sync: true);
+    late final StreamBeacon<int> s;
+    controller.onCancel = () {
+      controller.addError(Exception('cancel error'));
+    };
+
+    s = Beacon.stream(() => controller.stream, shouldSleep: false);
+    BeaconScheduler.flush();
+
+    expect(s.dispose, returnsNormally);
+    expect(s.isDisposed, isTrue);
+    await controller.close();
+  });
 }

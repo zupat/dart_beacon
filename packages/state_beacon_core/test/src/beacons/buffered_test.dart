@@ -93,6 +93,14 @@ void main() {
       BeaconScheduler.flush();
       expect(buffer, equals([]));
     });
+
+    test('should be safe to dispose twice', () {
+      final beacon = Beacon.bufferedCount<int>(3);
+      beacon.add(1);
+      beacon.dispose();
+      expect(beacon.dispose, returnsNormally);
+      expect(beacon.isDisposed, isTrue);
+    });
   });
 
   group('BufferedTimeBeacon', () {
@@ -161,6 +169,14 @@ void main() {
 
       expect(beacon.currentBuffer.value, equals([]));
       expect(buffer, equals([]));
+    });
+
+    test('should be safe to dispose twice', () {
+      final beacon = Beacon.bufferedTime<int>(duration: k10ms);
+      beacon.add(1);
+      beacon.dispose();
+      expect(beacon.dispose, returnsNormally);
+      expect(beacon.isDisposed, isTrue);
     });
   });
 }

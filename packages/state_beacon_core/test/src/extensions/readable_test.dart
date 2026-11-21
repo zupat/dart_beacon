@@ -290,4 +290,22 @@ void main() {
 
     expect(futureValue, completion(null));
   });
+
+  test('next should not throw StateError on back-to-back updates in one flush',
+      () async {
+    final beacon = Beacon.writable(0);
+    final futureValue = beacon.next();
+    final unsub = beacon.subscribe(
+      (v) {
+        if (v == 1) beacon.value = 2;
+      },
+      startNow: false,
+    );
+
+    beacon.value = 1;
+    expect(BeaconScheduler.flush, returnsNormally);
+    expect(await futureValue, 1);
+
+    unsub();
+  });
 }

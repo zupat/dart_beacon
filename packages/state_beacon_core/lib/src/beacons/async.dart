@@ -25,12 +25,14 @@ abstract class AsyncBeacon<T> extends ReadableBeacon<AsyncValue<T>>
   /// to .updateWith.
   Future<void> _updateQueue = Future.value();
 
+  T? get _rawLastData => _value.lastData;
+
   void _setLoadingWithLastData() {
-    _setValue(AsyncLoading()..setLastData(lastData));
+    _setValue(AsyncLoading()..setLastData(_rawLastData));
   }
 
   void _setErrorWithLastData(Object error, [StackTrace? stackTrace]) {
-    _setValue(AsyncError(error, stackTrace)..setLastData(lastData));
+    _setValue(AsyncError(error, stackTrace)..setLastData(_rawLastData));
   }
 
   Stream<T> Function() _compute;
@@ -56,7 +58,11 @@ abstract class AsyncBeacon<T> extends ReadableBeacon<AsyncValue<T>>
       if (newValue case final AsyncData<T> data) {
         compl.peek().complete(data.value);
       } else if (newValue case AsyncError(:final error, :final stackTrace)) {
-        compl.peek().completeError(error, stackTrace);
+        final current = compl.peek();
+        // Prevent uncaught zone errors when nobody is actively awaiting this
+        // future; callers that do await current.future still receive the error.
+        current.future.ignore();
+        current.completeError(error, stackTrace);
       }
     }
 
@@ -109,7 +115,7 @@ abstract class AsyncBeacon<T> extends ReadableBeacon<AsyncValue<T>>
               _setValue(AsyncData(v));
             },
             onError: (Object error, [StackTrace? stackTrace]) {
-              if (currentUpdateWithFuture != _updateQueue) {
+              if (currentUpdateWithFuture != _updateQueue || _isDisposed) {
                 return;
               }
               _setErrorWithLastData(error, stackTrace);

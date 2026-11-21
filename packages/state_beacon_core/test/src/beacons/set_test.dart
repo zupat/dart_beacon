@@ -125,4 +125,21 @@ void main() {
 
     expect(called, 1);
   });
+
+  test('should not notify when add() receives an already-present element', () {
+    final nums = Beacon.hashSet<int>({1, 2, 3});
+    var called = 0;
+
+    final unsub = nums.subscribe((_) => called++, startNow: false);
+
+    nums.add(2);
+    BeaconScheduler.flush();
+    expect(called, 0);
+
+    nums.add(4);
+    BeaconScheduler.flush();
+    expect(called, 1);
+
+    unsub();
+  });
 }

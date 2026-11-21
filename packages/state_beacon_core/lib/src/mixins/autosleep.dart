@@ -27,7 +27,19 @@ mixin _AutoSleep<T, SubT> on ReadableBeacon<T> {
     return super.value;
   }
 
+  @override
+  VoidCallback subscribe(
+    void Function(T) callback, {
+    bool startNow = true,
+  }) {
+    if (_sleeping) {
+      _wakeUp();
+    }
+    return super.subscribe(callback, startNow: startNow);
+  }
+
   void _wakeUp() {
+    if (_isDisposed) return;
     if (_sleeping) {
       _sleeping = false;
     }
@@ -36,6 +48,7 @@ mixin _AutoSleep<T, SubT> on ReadableBeacon<T> {
 
   void _goToSleep() {
     Future.delayed(Duration.zero, () {
+      if (_isDisposed || _effectDispose == null) return;
       if (_observers.isEmpty) {
         _sleeping = true;
         _cancel();
@@ -62,10 +75,10 @@ mixin _AutoSleep<T, SubT> on ReadableBeacon<T> {
         (
             // ignore: deprecated_member_use_from_same_package
             $$widgetSubscribers$$.isNotEmpty ||
-            observer is Effect ||
-            // A derived beacon that drops a conditional dependency should
-            // not keep the source awake.
-            observer is DerivedBeacon);
+                observer is Effect ||
+                // A derived beacon that drops a conditional dependency should
+                // not keep the source awake.
+                observer is DerivedBeacon);
     super._removeObserver(observer);
     if (!shouldSleep) return;
     if (canSleep && _observers.isEmpty) {

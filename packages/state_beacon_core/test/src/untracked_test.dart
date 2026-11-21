@@ -31,4 +31,37 @@ void main() {
     BeaconScheduler.flush();
     expect(callCount, equals(2));
   });
+
+  test(
+      'should not track reads inside Beacon.untracked when a derived beacon '
+      'is evaluated inside an outer Beacon.untracked', () {
+    final tracked = Beacon.writable(1);
+    final untrackedSource = Beacon.writable(10);
+    var computes = 0;
+
+    final derived = Beacon.derived(() {
+      computes++;
+      final a = tracked.value;
+      var b = 0;
+      Beacon.untracked(() {
+        b = untrackedSource.value;
+      });
+      return a + b;
+    });
+
+    Beacon.untracked(() {
+      expect(derived.value, 11);
+    });
+
+    expect(computes, 1);
+    expect(untrackedSource.listenersCount, 0);
+
+    untrackedSource.value = 20;
+    expect(derived.value, 11);
+    expect(computes, 1);
+
+    tracked.value = 2;
+    expect(derived.value, 22);
+    expect(computes, 2);
+  });
 }
