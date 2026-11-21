@@ -1,5 +1,7 @@
 // ignore_for_file: strict_raw_type, inference_failure_on_instance_creation
 
+import 'dart:async';
+
 import 'package:state_beacon_core/state_beacon_core.dart';
 import 'package:test/test.dart';
 
@@ -198,5 +200,34 @@ void main() {
     expect(data.lastData, 1);
     expect(data.unwrapOrNull(), 1);
     expect(data.isLoading, false);
+  });
+
+  test('tryCatch should not throw if beacon is disposed while pending',
+      () async {
+    final beaconSuccess = Beacon.writable<AsyncValue<int>>(AsyncIdle());
+    final completerSuccess = Completer<int>();
+    final futureSuccess = AsyncValue.tryCatch(
+      () => completerSuccess.future,
+      beacon: beaconSuccess,
+    );
+
+    beaconSuccess.dispose();
+    completerSuccess.complete(42);
+
+    final resultSuccess = await futureSuccess;
+    expect(resultSuccess, AsyncData(42));
+
+    final beaconError = Beacon.writable<AsyncValue<int>>(AsyncIdle());
+    final completerError = Completer<int>();
+    final futureError = AsyncValue.tryCatch(
+      () => completerError.future,
+      beacon: beaconError,
+    );
+
+    beaconError.dispose();
+    completerError.completeError(Exception('boom'));
+
+    final resultError = await futureError;
+    expect(resultError, isA<AsyncError<int>>());
   });
 }
