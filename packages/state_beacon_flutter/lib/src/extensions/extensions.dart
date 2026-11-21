@@ -11,28 +11,24 @@ part 'readable.dart';
 part 'watch_observe.dart';
 part 'writable.dart';
 
-final Map<int, ValueNotifierBeacon<dynamic>> _vnCache = {};
+final Expando<ValueNotifierBeacon<dynamic>> _vnCache = Expando();
 
 @visibleForTesting
 
-/// The number of value notifiers currently in use
-/// This is used for testing purposes only
+/// Whether a [ValueNotifier] is currently cached for [beacon].
+/// This is used for testing purposes only.
 bool hasNotifier(BaseBeacon<dynamic> beacon) {
-  return _vnCache.containsKey(beacon.hashCode);
+  return _vnCache[beacon] != null;
 }
 
 ValueNotifierBeacon<T> _toValueNotifier<T>(ReadableBeacon<T> beacon) {
-  final key = beacon.hashCode;
-
-  final existing = _vnCache[key];
+  final existing = _vnCache[beacon];
 
   if (existing != null) {
     return existing as ValueNotifierBeacon<T>;
   }
 
   final notifier = ValueNotifierBeacon(beacon.peek());
-
-  _vnCache[key] = notifier;
 
   final unsub = beacon.subscribe(notifier.set, startNow: false);
 
@@ -49,14 +45,16 @@ ValueNotifierBeacon<T> _toValueNotifier<T>(ReadableBeacon<T> beacon) {
       removeBeaconDisposeCallback();
     }
 
-    if (identical(_vnCache[key], notifier)) {
-      _vnCache.remove(key);
+    if (identical(_vnCache[beacon], notifier)) {
+      _vnCache[beacon] = null;
     }
   });
 
   // `ValueNotifierBeacon.dispose` is idempotent, so an earlier dispose
   // callback may already have disposed the notifier before this hook runs.
   removeBeaconDisposeCallback = beacon.onDispose(notifier.dispose);
+
+  _vnCache[beacon] = notifier;
 
   return notifier;
 }

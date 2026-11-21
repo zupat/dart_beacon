@@ -1,7 +1,34 @@
+// ignore_for_file: avoid_equals_and_hash_code_on_mutable_classes
+// ignore_for_file: hash_and_equals
+
+import 'dart:developer';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:state_beacon_flutter/src/extensions/extensions.dart';
 import 'package:state_beacon_flutter/state_beacon_flutter.dart';
+
+class _CollidingBeacon<T> extends WritableBeacon<T> {
+  _CollidingBeacon(T initialValue, this.forcedHash)
+      : super(initialValue: initialValue);
+
+  final int forcedHash;
+
+  @override
+  int get hashCode => forcedHash;
+}
+
+Future<void> _forceFullGC() async {
+  final start = reachabilityBarrier;
+  final oldGen = <List<int>>[];
+  while (reachabilityBarrier < start + 3) {
+    oldGen.add(List<int>.filled(256 * 1024, 0));
+    if (oldGen.length > 32) {
+      oldGen.clear();
+    }
+    await Future<void>.delayed(Duration.zero);
+  }
+}
 
 void main() {
   test('should convert to a value notifier', () {
@@ -226,6 +253,78 @@ void main() {
       expect(beacon.value, 42);
 
       beacon.dispose();
+    },
+  );
+
+  test(
+    'toValueNotifier should not collide for distinct beacons with the same '
+    'hashCode',
+    () {
+      final intBeacon = _CollidingBeacon<int>(1, 12345);
+      final strBeacon = _CollidingBeacon<String>('hi', 12345);
+
+      final intVn = intBeacon.toValueNotifier();
+      expect(intVn.value, 1);
+
+      expect(
+        () {
+          final strVn = strBeacon.toValueNotifier();
+          expect(strVn.value, 'hi');
+        },
+        returnsNormally,
+        reason: 'Distinct beacons with the same hashCode must not collide in '
+            '_vnCache or throw TypeError.',
+      );
+
+      intBeacon.dispose();
+      strBeacon.dispose();
+    },
+  );
+
+  test(
+    'toValueNotifier on a disposed beacon should not pollute _vnCache',
+    () {
+      final beacon = Beacon.writable(0)..dispose();
+
+      expect(beacon.toValueNotifier, throwsA(isA<AssertionError>()));
+      expect(
+        hasNotifier(beacon),
+        isFalse,
+        reason: 'A failed toValueNotifier() on a disposed beacon must not '
+            'leave an unsubscribed notifier in _vnCache.',
+      );
+      expect(beacon.toValueNotifier, throwsA(isA<AssertionError>()));
+    },
+  );
+
+  test(
+    'toListenable should not prevent unreachable beacons from being '
+    'garbage collected',
+    () async {
+      WeakReference<WritableBeacon<int>> createPlainAndDrop() {
+        final b = Beacon.writable(0);
+        return WeakReference(b);
+      }
+
+      WeakReference<WritableBeacon<int>> createListenableAndDrop() {
+        final b = Beacon.writable(0)..toListenable();
+        return WeakReference(b);
+      }
+
+      final plainRef = createPlainAndDrop();
+      final vnRef = createListenableAndDrop();
+
+      await _forceFullGC();
+
+      // Control: plain unreachable beacon is collected.
+      expect(plainRef.target, isNull);
+
+      expect(
+        vnRef.target,
+        isNull,
+        reason: 'Calling toListenable() must not permanently root the beacon '
+            'in a strong global Map.',
+      );
     },
   );
 }
