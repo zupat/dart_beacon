@@ -1,7 +1,30 @@
 # 4.0.0
 
 - [Breaking] Upgraded `lite_ref` to `^1.0.1`:
-  - `autoDispose: false` now only disables zero-listener disposal; scope-owned values are still disposed on override replacement and scope unmount. Migrate externally owned values from `overrideWith((_) => value, autoDispose: false)` to `overrideWithValue(value)`.
+  - `autoDispose: false` now only disables zero-listener disposal; scope-owned values are still disposed on override replacement and scope unmount. Migrate externally owned values from `overrideWith((_) => value, autoDispose: false)` to `overrideWithValue(value)`:
+
+    ### Before
+
+    ```dart
+    LiteRefScope(
+      overrides: {
+        controllerRef.overrideWith((_) => sharedController, autoDispose: false),
+      },
+      child: const MyApp(),
+    );
+    ```
+
+    ### After
+
+    ```dart
+    LiteRefScope(
+      overrides: {
+        controllerRef.overrideWithValue(sharedController),
+      },
+      child: const MyApp(),
+    );
+    ```
+
   - Scoped ref factories now receive the owning `LiteRefScope`'s `BuildContext` rather than the requesting widget's context, and inter-ref dependencies are tracked synchronously during factory execution. Resolve dependent refs eagerly in the factory rather than inside lazy closures (`Beacon.derived`, `Beacon.future`, `Beacon.stream`) so `lite_ref` properly tracks them for auto-disposal and override eviction:
 
     ### Before
