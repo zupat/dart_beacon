@@ -38,9 +38,19 @@ extension ReadableBeaconUtils<T> on ReadableBeacon<T> {
   }) async {
     final completer = Completer<T>();
 
-    final unsub = subscribe(
+    late final VoidCallback unsub;
+    late final VoidCallback rmCallback;
+
+    void cleanup() {
+      unsub();
+      rmCallback();
+    }
+
+    unsub = subscribe(
       (v) {
+        if (completer.isCompleted) return;
         if (filter?.call(v) ?? true) {
+          cleanup();
           completer.complete(v);
         }
       },
@@ -50,8 +60,10 @@ extension ReadableBeaconUtils<T> on ReadableBeacon<T> {
     // if the beacon is disposed before a new value is emitted,
     // complete the future with the current value.
     // Without this, the future would hang indefinitely
-    final rmCallback = onDispose(() {
+    rmCallback = onDispose(() {
       if (completer.isCompleted) return;
+
+      unsub();
 
       if (fallback != null || null is T) {
         completer.complete(fallback);
@@ -66,12 +78,11 @@ extension ReadableBeaconUtils<T> on ReadableBeacon<T> {
       }
     });
 
-    final result = await completer.future;
-
-    unsub();
-    rmCallback(); // allow the completer to be garbage collected
-
-    return result;
+    try {
+      return await completer.future;
+    } finally {
+      cleanup(); // allow the completer to be garbage collected
+    }
   }
 
   /// Listens for the next value emitted by this Beacon and returns it as a Future.
