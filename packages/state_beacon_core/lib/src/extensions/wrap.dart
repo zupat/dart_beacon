@@ -38,7 +38,7 @@ extension WritableWrap<T, U> on BeaconWrapper<T, U> {
     bool disposeTogether = false,
     bool startNow = true,
   }) {
-    if (_wrapped.containsKey(target.hashCode)) return;
+    if (_wrapped.containsKey(target)) return;
 
     if (then == null && T != V) {
       throw WrapTargetWrongTypeException(name, target.name);
@@ -54,7 +54,7 @@ extension WritableWrap<T, U> on BeaconWrapper<T, U> {
       startNow: startNow,
     );
 
-    _wrapped[target.hashCode] = unsub;
+    _wrapped[target] = unsub;
 
     if (disposeTogether) {
       var isDisposing = false;
@@ -89,11 +89,13 @@ extension WritableWrap<T, U> on BeaconWrapper<T, U> {
     void Function(T)? then,
     T? initialValue,
   }) {
-    final internalBeacon = RawStreamBeacon<T>(
+    late final RawStreamBeacon<T> internalBeacon;
+    internalBeacon = RawStreamBeacon<T>(
       () => source,
       isLazy: true,
       initialValue: initialValue,
       shouldSleep: true,
+      onDone: () => internalBeacon.dispose(),
     );
 
     wrap(
@@ -102,12 +104,13 @@ extension WritableWrap<T, U> on BeaconWrapper<T, U> {
       startNow: false,
     );
 
+    final rmParentDispose = onDispose(internalBeacon.dispose);
+
     internalBeacon.onDispose(() {
-      _wrapped.remove(internalBeacon.hashCode);
+      _wrapped.remove(internalBeacon);
+      rmParentDispose();
       // don't dispose parent beacon because
       // internal is disposed when the stream ends
     });
-
-    onDispose(internalBeacon.dispose);
   }
 }

@@ -1,5 +1,7 @@
 // ignore_for_file: cascade_invocations
 
+import 'dart:async';
+
 import 'package:state_beacon_core/state_beacon_core.dart';
 import 'package:test/test.dart';
 
@@ -295,4 +297,80 @@ void main() {
     expect(wrapper.value, 10); // should not update immediately
     await expectLater(wrapper.next(), completion(50));
   });
+
+  test('should wrap two distinct RawStreamBeacons with equal hashCode',
+      () async {
+    final one = StreamController<int>();
+    final two = StreamController<int>();
+    var idx = 0;
+    Stream<int> create() => idx++ == 0 ? one.stream : two.stream;
+
+    final a = Beacon.streamRaw<int>(create, initialValue: 0, name: 'raw');
+    final b = Beacon.streamRaw<int>(create, initialValue: 0, name: 'raw');
+    final wrapper = Beacon.writable<int>(0);
+
+    addTearDown(() async {
+      a.dispose();
+      b.dispose();
+      wrapper.dispose();
+      await one.close();
+      await two.close();
+    });
+
+    expect(a.hashCode, b.hashCode);
+
+    wrapper
+      ..wrap(a)
+      ..wrap(b);
+    BeaconScheduler.flush();
+
+    two.add(99);
+    await delay(k10ms);
+    BeaconScheduler.flush();
+
+    expect(wrapper.value, 99);
+  });
+
+  test('ingest should dispose internal beacon when stream completes', () async {
+    var disposedCount = 0;
+    BeaconObserver.instance = _DisposeCountingObserver(() => disposedCount++);
+    addTearDown(() => BeaconObserver.instance = null);
+
+    final beacon = Beacon.writable<int>(0);
+    final controller = StreamController<int>();
+    beacon.ingest(controller.stream);
+    BeaconScheduler.flush();
+
+    controller.add(1);
+    controller.add(2);
+    await controller.close();
+    await delay(k10ms);
+
+    expect(beacon.value, 2);
+    expect(disposedCount, 1);
+
+    beacon.dispose();
+    expect(disposedCount, 2);
+  });
+}
+
+class _DisposeCountingObserver extends LoggingObserver {
+  _DisposeCountingObserver(this._onDispose);
+
+  final void Function() _onDispose;
+
+  @override
+  void onCreate(ReadableBeacon<dynamic> beacon, bool lazy) {}
+
+  @override
+  void onUpdate(ReadableBeacon<dynamic> beacon) {}
+
+  @override
+  void onWatch(String effectName, BaseBeacon<dynamic> beacon) {}
+
+  @override
+  void onStopWatch(String effectName, BaseBeacon<dynamic> beacon) {}
+
+  @override
+  void onDispose(ReadableBeacon<dynamic> beacon) => _onDispose();
 }
