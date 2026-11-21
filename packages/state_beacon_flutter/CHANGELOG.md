@@ -1,3 +1,29 @@
+# 3.1.4
+
+- [Fix] `TextEditingBeacon`: fix re-entrant controller/beacon sync and initialize the controller before adding the beacon to a `BeaconGroup`.
+
+- [Fix] `ValueNotifier.toBeacon` and `WritableBeacon.toValueNotifier`: prevent re-entrant sync, spurious initial notifications, and duplicate write-back listeners.
+
+- [Fix] `ValueNotifierBeacon`: make `dispose` idempotent, clear its dispose callbacks, and ignore writes after disposal.
+
+- [Fix] `watch`/`observe`: use the latest `observe` callback after a rebuild, handle uninitialized lazy beacons, avoid a `BuildContext` GC leak, and don't register subscribers when subscribing to a disposed beacon.
+
+- [Fix] `_flutterScheduler`: flush post-frame updates via a microtask and reset its flushing flag when a flush throws.
+
+- [Fix] Cache `ValueNotifierBeacon`s by beacon identity, so beacons that override `==` get separate notifiers.
+
+- [Feat] Export `ValueNotifierUtils`.
+
+- [Chore] Depend on `state_beacon_core ^3.1.4`.
+
+### Behavioural changes
+
+- `observe` no longer invokes the callback with a null previous value before a lazy beacon has a value.
+
+- Repeated `toValueNotifier()` calls no longer stack write-back listeners.
+
+- `TextEditingBeacon` is added to its `BeaconGroup` only after it is fully initialized.
+
 # 3.1.3
 
 - [Fix] `ValueNotifierBeacon` now removes its beacon dispose callback safely instead of throwing a `ConcurrentModificationError`, and `dispose` is idempotent. This also fixes cleanup in the writable extension.
