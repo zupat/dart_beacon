@@ -66,4 +66,53 @@ void main() {
 
     expect(notifier.value, 3);
   });
+
+  test(
+    'should stay in sync when a ValueNotifier listener modifies value '
+    're-entrantly',
+    () {
+      final notifier = ValueNotifier(0);
+      final beacon = notifier.toBeacon();
+
+      notifier.addListener(() {
+        if (notifier.value > 10) {
+          notifier.value = 10;
+        }
+      });
+
+      beacon.value = 20;
+
+      expect(notifier.value, 10);
+      expect(
+        beacon.value,
+        10,
+        reason: 'Re-entrant writes from a ValueNotifier listener must sync '
+            'back to the beacon.',
+      );
+
+      beacon.dispose();
+      notifier.dispose();
+    },
+  );
+
+  test(
+    'should not trigger spurious ValueNotifier notifications on creation',
+    () {
+      final notifier = ValueNotifier<double>(double.nan);
+      var calls = 0;
+      notifier.addListener(() => calls++);
+
+      final beacon = notifier.toBeacon();
+
+      expect(
+        calls,
+        0,
+        reason: 'toBeacon() should subscribe with startNow: false so it does '
+            'not emit a spurious notification on creation.',
+      );
+
+      beacon.dispose();
+      notifier.dispose();
+    },
+  );
 }
