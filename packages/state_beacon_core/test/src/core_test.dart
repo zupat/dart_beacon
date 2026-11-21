@@ -720,6 +720,20 @@ void main() {
     expect(a.isDisposed, isFalse);
   });
 
+  test('onDispose callback can unregister itself during dispose', () {
+    final a = Beacon.writable(0);
+    var ran = 0;
+    late void Function() remove;
+
+    remove = a.onDispose(() {
+      ran++;
+      remove();
+    });
+
+    expect(a.dispose, returnsNormally);
+    expect(ran, 1);
+  });
+
   test('async scheduler recovers after an effect throws', () async {
     addTearDown(BeaconScheduler.useAsyncScheduler);
     BeaconScheduler.useAsyncScheduler();

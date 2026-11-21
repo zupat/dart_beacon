@@ -577,4 +577,30 @@ void main() {
       expect(asyncCalls, 1, reason: 'async subscription should be disposed');
     },
   );
+
+  test(
+    'sync subscription can cancel an async subscription during notification '
+    'without throwing RangeError',
+    () {
+      final beacon = Beacon.writable(0);
+      var asyncCalls = 0;
+      late void Function() unsubAsync;
+
+      beacon.subscribeSynchronously(
+        (v) {
+          if (v == 1) unsubAsync();
+        },
+        startNow: false,
+      );
+
+      unsubAsync = beacon.subscribe(
+        (_) => asyncCalls++,
+        startNow: false,
+      );
+
+      expect(() => beacon.value = 1, returnsNormally);
+      BeaconScheduler.flush();
+      expect(asyncCalls, 0);
+    },
+  );
 }

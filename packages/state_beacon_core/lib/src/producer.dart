@@ -206,8 +206,13 @@ abstract class Producer<T> implements Disposable {
 
   void _notifyListeners() {
     final len = _observers.length;
-    for (var i = 0; i < len; i++) {
-      _observers[i].markDirty();
+    if (len == 0) return;
+    if (len == 1) {
+      _observers[0].markDirty();
+      return;
+    }
+    for (final observer in List<Consumer>.of(_observers)) {
+      observer.markDirty();
     }
   }
 
@@ -270,14 +275,14 @@ abstract class Producer<T> implements Disposable {
   void dispose() {
     if (_isDisposed) return;
     _isDisposed = true;
-    for (final observer in _observers) {
+    for (final observer in List<Consumer>.of(_observers)) {
       observer._sourceDisposed(this);
     }
     _observers.clear();
     // ignore: deprecated_member_use_from_same_package
     $$widgetSubscribers$$.clear();
     _previousValue = null;
-    for (final callback in _disposeCallbacks) {
+    for (final callback in List<VoidCallback>.of(_disposeCallbacks)) {
       callback();
     }
     _disposeCallbacks.clear();
