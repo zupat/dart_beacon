@@ -1,50 +1,32 @@
 # 3.1.3
 
-- [Fix] `DerivedBeacon`: restore the tracking context when `compute` throws, notify observers only after it is restored, and recover source/observer links after a transient error.
+- [Fix] Derived beacons recover after a `compute` error and no longer miss dependent updates.
 
-- [Fix] `DerivedSubscription`: handle dirty and pre-flush reads, skip the callback if disposed during a peek, and remove all queued entries on dispose.
+- [Fix] Subscriptions and effects no longer run after disposal, run cleanups untracked, and stay responsive after a throw. `next()` no longer throws on back-to-back updates.
 
-- [Fix] Link wrapped and derived sources by identity, so beacons that override `==` are not treated as the same source. Stream-backed beacons are disposed when their stream completes.
+- [Fix] `dispose()` is safe to call twice, and pending timers and streams are cancelled (debounced, throttled, buffered, progress, and stream-backed beacons).
 
-- [Fix] `BeaconFamily`: keep the cache and `entries` consistent on `remove`/`clear`.
+- [Fix] `ProgressBeacon`: loop restarts, pause/resume, and disposal from callbacks.
 
-- [Fix] `Effect`: run cleanups untracked, survive throws and self-disposal, and never run a stale cleanup twice.
+- [Fix] `FutureBeacon`/`StreamBeacon`: `toFuture()` wakes a sleeping beacon and `reset()` discards in-flight updates.
 
-- [Fix] `FutureBeacon`/`StreamBeacon`: wake sleeping beacons in `toFuture`, invalidate queued `updateWith` on `reset`, and avoid unhandled completer errors.
+- [Fix] `BeaconFamily` keeps the cache and `entries` consistent on `remove`/`clear`.
 
-- [Fix] Make `dispose()` idempotent and cancel pending work in `DebouncedBeacon`, `ThrottledBeacon`, `BufferedBeacon`, `ProgressBeacon`, `MappedBeacon`, `ReadableBeacon`, and `DerivedBeacon`.
+- [Fix] Beacons that override `==` are no longer confused with each other when wrapping or deriving.
 
-- [Fix] `ProgressBeacon`: fix loop restarts, pause/resume during the loop gap, and disposal from `onProgress`/`onDone`.
-
-- [Fix] `Subscription`: mark clean before invoking the callback and ignore updates after disposal.
-
-- [Fix] Scheduler: reset its flushing flag and drain the queue when an effect throws.
-
-- [Fix] `Beacon.untracked`: reads inside a derived beacon evaluated within an untracked block are no longer tracked.
-
-- [Fix] `ReadableBeaconUtils.next`: unsubscribe immediately on a match, fixing a `StateError` on back-to-back updates in one flush.
-
-- [Fix] `AsyncValue.tryCatch`: do not write to a disposed beacon.
+- [Fix] `Beacon.untracked` no longer tracks reads inside a derived beacon, and `AsyncValue.tryCatch` no longer writes to a disposed beacon.
 
 ### Behavioural changes
 
-- `SetBeacon.add` with an existing element and `MapBeacon.putIfAbsent` with an existing key no longer notify listeners.
+- `SetBeacon.add` and `MapBeacon.putIfAbsent` no longer notify listeners when the value is already present.
 
-- `ListBeacon.first`/`last`/`length` setters and `UndoRedoBeacon.set` are no longer tracked reads, so writing to them inside a derived or effect no longer subscribes it to that beacon.
+- `ListBeacon` setters and `UndoRedoBeacon.set` are no longer tracked reads, and reads inside an `Effect` cleanup are untracked.
 
-- Reads inside an `Effect` cleanup are now untracked and no longer add dependencies.
+- `ThrottledBeacon.setDuration` flushes or restarts pending buffered values, and `DebouncedBeacon.reset()` discards the pending value and resets immediately.
 
-- `ThrottledBeacon.setDuration` flushes pending buffered values immediately when `unblock` is `true`, and restarts the timer with the new duration when `false`.
+- `ProgressBeacon.pause()`/`resume()` ignore calls in the wrong state, and pausing between loop iterations is supported.
 
-- `DebouncedBeacon.reset()` cancels the pending debounce and resets to the initial value immediately; the stale pending value is no longer emitted later.
-
-- `ProgressBeacon.pause()`/`resume()` ignore calls in the wrong state, and pausing between loop iterations is now supported.
-
-- Subscribing to an auto-sleeping beacon now wakes it before subscribing.
-
-- `BeaconFamily.clear()` keeps `entries` active, so `entries` is still populated after a later access.
-
-- Disposing an already disposed beacon, effect, or subscription is now a no-op instead of throwing.
+- Subscribing to an auto-sleeping beacon now wakes it, and `BeaconFamily.clear()` keeps `entries` active.
 
 # 3.1.2
 
