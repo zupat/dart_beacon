@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:state_beacon_flutter/state_beacon_flutter.dart';
@@ -97,6 +98,59 @@ void main() {
 
       a.dispose();
       b.dispose();
+    },
+  );
+
+  testWidgets(
+    'flutterScheduler flushes updates triggered during '
+    'SchedulerPhase.postFrameCallbacks',
+    (tester) async {
+      BeaconScheduler.useFlutterScheduler();
+      final counter = Beacon.writable(0);
+      var subCalls = 0;
+      counter.subscribe((_) => subCalls++, startNow: false);
+
+      await tester.pumpWidget(
+        Builder(
+          builder: (context) {
+            counter.watch(context);
+            return const SizedBox();
+          },
+        ),
+      );
+
+      var postFrameRan = false;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        postFrameRan = true;
+        expect(
+          SchedulerBinding.instance.schedulerPhase,
+          SchedulerPhase.postFrameCallbacks,
+        );
+        counter.value = 1;
+      });
+
+      // Schedule and pump a single frame so the postFrameCallback executes.
+      SchedulerBinding.instance.scheduleFrame();
+      await tester.pump();
+      expect(postFrameRan, isTrue);
+
+      // Flush pending microtasks without scheduling/pumping another frame.
+      await tester.idle();
+
+      expect(
+        subCalls,
+        1,
+        reason: 'Updates made during postFrameCallbacks must flush without '
+            'waiting indefinitely for an unscheduled next frame.',
+      );
+
+      // Also verify subsequent idle-phase updates are not blocked.
+      counter.value = 2;
+      await tester.idle();
+
+      expect(subCalls, 2);
+
+      counter.dispose();
     },
   );
 }

@@ -66,7 +66,8 @@ void _flutterScheduler() {
   if (_flushing) return;
   final phase = SchedulerBinding.instance.schedulerPhase;
   _flushing = true;
-  if (phase == SchedulerPhase.idle) {
+  if (phase == SchedulerPhase.idle ||
+      phase == SchedulerPhase.postFrameCallbacks) {
     Future.microtask(() {
       try {
         core.BeaconScheduler.flush();
