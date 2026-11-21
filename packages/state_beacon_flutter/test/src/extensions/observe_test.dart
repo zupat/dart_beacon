@@ -106,4 +106,88 @@ void main() {
       observeBeacon.dispose();
     },
   );
+
+  testWidgets(
+    'observe does not throw LateInitializationError on an uninitialized '
+    'lazy beacon',
+    (tester) async {
+      final lazy = Beacon.lazyWritable<int>();
+      final transitions = <(int, int)>[];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              lazy.observe(context, (prev, next) {
+                transitions.add((prev, next));
+              });
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'observe() returns void and must not crash calling peek() on '
+            'an uninitialized lazy beacon.',
+      );
+
+      // First value initializes the lazy beacon (previousValue is null).
+      lazy.value = 1;
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(transitions, isEmpty);
+
+      // Subsequent updates deliver (prev, next) normally.
+      lazy.value = 2;
+      await tester.pumpAndSettle();
+      expect(transitions, [(1, 2)]);
+
+      lazy.dispose();
+    },
+  );
+
+  testWidgets(
+    'observe does not throw TypeError when DerivedBeacon recovers from '
+    'initial error',
+    (tester) async {
+      final shouldThrow = Beacon.writable(true);
+      final derived = Beacon.derived<int>(() {
+        if (shouldThrow.value) throw StateError('init fail');
+        return 42;
+      });
+
+      expect(() => derived.value, throwsStateError);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              try {
+                derived.observe(context, (prev, next) {});
+              } catch (_) {}
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      // Clear any exception from initial forced evaluation.
+      tester.takeException();
+      BeaconScheduler.useFlutterScheduler();
+
+      shouldThrow.value = false;
+
+      expect(
+        BeaconScheduler.flush,
+        returnsNormally,
+        reason: 'observe() must not throw TypeError casting null '
+            'previousValue to T on recovery.',
+      );
+
+      derived.dispose();
+      shouldThrow.dispose();
+    },
+  );
 }

@@ -48,10 +48,12 @@ extension WidgetUtils<T> on BaseBeacon<T> {
   T watch(BuildContext context) {
     final key = identityHashCode(context);
 
-    return _watchOrObserve(
+    _watchOrObserve(
       key,
       context,
     );
+
+    return peek();
   }
 
   /// Observes the state of a beacon and triggers a callback with the current state.
@@ -88,11 +90,16 @@ extension WidgetUtils<T> on BaseBeacon<T> {
     _watchOrObserve(
       key,
       context,
-      callback: () => callback(previousValue as T, peek()),
+      callback: () {
+        final prev = previousValue;
+        if (prev is T) {
+          callback(prev, peek());
+        }
+      },
     );
   }
 
-  T _watchOrObserve(
+  void _watchOrObserve(
     int key,
     BuildContext context, {
     VoidCallback? callback,
@@ -107,7 +114,7 @@ extension WidgetUtils<T> on BaseBeacon<T> {
     }
 
     if ($$widgetSubscribers$$.contains(key)) {
-      return peek();
+      return;
     }
 
     $$widgetSubscribers$$.add(key);
@@ -151,7 +158,5 @@ extension WidgetUtils<T> on BaseBeacon<T> {
       detach: detachToken,
     );
     // coverage:ignore-end
-
-    return peek();
   }
 }
