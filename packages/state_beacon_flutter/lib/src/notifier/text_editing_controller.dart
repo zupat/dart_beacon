@@ -4,6 +4,8 @@ import 'package:state_beacon_core/state_beacon_core.dart';
 /// This is a wrapper around a [TextEditingController] that
 /// allows you to hook into the controller's lifecycle.
 class _TextEditingController extends TextEditingController {
+  _TextEditingController({super.text});
+
   VoidCallback? disposeCallback;
   bool _disposed = false;
 
@@ -20,36 +22,51 @@ class _TextEditingController extends TextEditingController {
 class TextEditingBeacon extends WritableBeacon<TextEditingValue> {
   /// @macro [TextEditingBeacon]
   TextEditingBeacon({String? text, BeaconGroup? group, super.name})
-      : super(
+      : _controller = _TextEditingController(text: text),
+        super(
           initialValue: text == null
               ? TextEditingValue.empty
               : TextEditingValue(text: text),
         ) {
-    group?.add(this);
-    var syncing = false;
-
-    void safeWrite(VoidCallback fn) {
-      if (syncing) return;
-      syncing = true;
-      try {
-        fn();
-      } finally {
-        syncing = false;
-      }
-    }
+    var syncingToController = false;
+    var syncingToBeacon = false;
 
     _controller.addListener(() {
-      safeWrite(() => set(_controller.value, force: true));
+      final controllerValue = _controller.value;
+      if (syncingToController &&
+          (identical(controllerValue, peek()) || controllerValue == peek())) {
+        return;
+      }
+      if (syncingToBeacon) return;
+      syncingToBeacon = true;
+      try {
+        set(controllerValue, force: true);
+      } finally {
+        syncingToBeacon = false;
+      }
     });
 
     subscribeSynchronously(
-      (v) => safeWrite(() => _controller.value = v),
+      (v) {
+        if (syncingToBeacon &&
+            (identical(_controller.value, v) || _controller.value == v)) {
+          return;
+        }
+        syncingToController = true;
+        try {
+          _controller.value = v;
+        } finally {
+          syncingToController = false;
+        }
+      },
+      startNow: false,
     );
 
     _controller.disposeCallback = dispose;
+    group?.add(this);
   }
 
-  late final _controller = _TextEditingController();
+  final _TextEditingController _controller;
 
   /// The current [TextEditingController].
   TextEditingController get controller => _controller;

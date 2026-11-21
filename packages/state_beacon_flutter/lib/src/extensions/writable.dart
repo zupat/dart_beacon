@@ -4,9 +4,7 @@ part of 'extensions.dart';
 extension WritableBeaconFlutterUtils<T> on WritableBeacon<T> {
   /// Converts this to a [ValueNotifier]
   ValueNotifier<T> toValueNotifier() {
-    final notifier = _toValueNotifier(this);
-
-    notifier.addListener(() => set(notifier.value));
+    final notifier = _toValueNotifier(this)..enableWriteBack(set);
 
     return notifier;
   }

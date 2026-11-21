@@ -80,4 +80,57 @@ void main() {
 
     expect(called, 1);
   });
+
+  test(
+    'should stay in sync when a controller listener modifies text re-entrantly',
+    () {
+      final beacon = TextEditingBeacon();
+      beacon.controller.addListener(() {
+        if (beacon.controller.text == 'bad') {
+          beacon.controller.text = 'good';
+        }
+      });
+
+      beacon.value = const TextEditingValue(text: 'bad');
+
+      expect(beacon.controller.text, 'good');
+      expect(
+        beacon.value.text,
+        'good',
+        reason: 'Re-entrant controller listener updates must sync back to the '
+            'beacon.',
+      );
+
+      beacon.dispose();
+    },
+  );
+
+  test(
+    'BeaconGroup.onCreate hook should see initial controller text and '
+    'preserve mutations',
+    () {
+      final group = BeaconGroup();
+      String? controllerTextInHook;
+
+      group.onCreate((b) {
+        if (b is TextEditingBeacon) {
+          controllerTextInHook = b.controller.text;
+          b.text = 'updated-in-hook';
+        }
+      });
+
+      final beacon = group.textEditing(text: 'initial');
+
+      expect(
+        controllerTextInHook,
+        'initial',
+        reason: 'Controller must be initialized with initial text before '
+            'group.add(this) notifies onCreate hooks.',
+      );
+      expect(beacon.text, 'updated-in-hook');
+      expect(beacon.controller.text, 'updated-in-hook');
+
+      group.disposeAll();
+    },
+  );
 }

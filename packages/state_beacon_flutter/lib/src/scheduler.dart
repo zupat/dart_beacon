@@ -64,17 +64,25 @@ var _flushing = false;
 
 void _flutterScheduler() {
   if (_flushing) return;
+  final phase = SchedulerBinding.instance.schedulerPhase;
   _flushing = true;
-  if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.idle) {
+  if (phase == SchedulerPhase.idle ||
+      phase == SchedulerPhase.postFrameCallbacks) {
     Future.microtask(() {
-      core.BeaconScheduler.flush();
-      _flushing = false;
+      try {
+        core.BeaconScheduler.flush();
+      } finally {
+        _flushing = false;
+      }
     });
   } else {
     // coverage:ignore-start
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      core.BeaconScheduler.flush();
-      _flushing = false;
+      try {
+        core.BeaconScheduler.flush();
+      } finally {
+        _flushing = false;
+      }
     });
     // coverage:ignore-end
   }
