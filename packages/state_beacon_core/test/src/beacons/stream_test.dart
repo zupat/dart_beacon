@@ -547,4 +547,19 @@ void main() {
 
     expect(errors, isEmpty);
   });
+
+  test('should ignore stream error emitted while disposing', () async {
+    final controller = StreamController<int>(sync: true);
+    late final StreamBeacon<int> s;
+    controller.onCancel = () {
+      controller.addError(Exception('cancel error'));
+    };
+
+    s = Beacon.stream(() => controller.stream, shouldSleep: false);
+    BeaconScheduler.flush();
+
+    expect(s.dispose, returnsNormally);
+    expect(s.isDisposed, isTrue);
+    await controller.close();
+  });
 }

@@ -115,7 +115,7 @@ abstract class AsyncBeacon<T> extends ReadableBeacon<AsyncValue<T>>
               _setValue(AsyncData(v));
             },
             onError: (Object error, [StackTrace? stackTrace]) {
-              if (currentUpdateWithFuture != _updateQueue) {
+              if (currentUpdateWithFuture != _updateQueue || _isDisposed) {
                 return;
               }
               _setErrorWithLastData(error, stackTrace);
