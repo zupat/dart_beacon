@@ -84,14 +84,15 @@ class BeaconFamily<Arg, BeaconType extends ReadableBeacon<dynamic>> {
 
     _clearing = true;
 
-    for (final beacon in _cache.values.toList()) {
-      beacon.dispose();
+    try {
+      for (final beacon in _cache.values.toList()) {
+        beacon.dispose();
+      }
+    } finally {
+      _clearing = false;
     }
-
-    _clearing = false;
 
     _cache.clear();
     if (_beaconsAccessed) _entries.clear();
-    _beaconsAccessed = false;
   }
 }
