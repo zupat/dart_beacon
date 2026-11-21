@@ -10,12 +10,14 @@ typedef ObserverCallback<T> = void Function(T prev, T next);
 final Finalizer<void Function()> _finalizer = Finalizer((fn) => fn());
 // coverage:ignore-end
 
-/// The latest `observe` callback for each beacon subscription key.
+/// The latest `observe` callback for each widget and beacon.
 ///
-/// Keyed by beacon identity (via [Expando]) and by the widget's subscription
-/// key, so rebuilding a widget can replace its callback without creating a
-/// second subscription.
-final _observerCallbacks = Expando<Map<int, VoidCallback>>();
+/// Keyed by widget [BuildContext] (outer [Expando]) and beacon identity
+/// (inner [Expando]) so rebuilding a widget replaces its callback without
+/// creating a second subscription, while keeping no strong GC root from the
+/// beacon or [_finalizer] to `context` (even when the callback captures
+/// `context`).
+final _observerCallbacks = Expando<Expando<VoidCallback>>();
 
 /// @macro WidgetUtils
 extension WidgetUtils<T> on BaseBeacon<T> {
@@ -95,13 +97,14 @@ extension WidgetUtils<T> on BaseBeacon<T> {
     BuildContext context, {
     VoidCallback? callback,
   }) {
-    final callbacks = callback == null
-        ? null
-        : (_observerCallbacks[this] ??= <int, VoidCallback>{});
+    final isObserving = callback != null;
 
     // Rebuilding with a new `observe` callback must replace the old one, even
     // though the beacon subscription itself already exists.
-    if (callback != null) callbacks![key] = callback;
+    if (isObserving) {
+      (_observerCallbacks[context] ??= Expando<VoidCallback>())[this] =
+          callback;
+    }
 
     if ($$widgetSubscribers$$.contains(key)) {
       return peek();
@@ -110,20 +113,24 @@ extension WidgetUtils<T> on BaseBeacon<T> {
     $$widgetSubscribers$$.add(key);
 
     final elementRef = WeakReference(context as Element);
+    final detachToken = Object();
     late VoidCallback unsub;
 
     void handleNewValue(T value) {
-      if (elementRef.target?.mounted == true) {
-        final cb = callbacks?[key];
-        if (cb != null) {
-          cb();
+      final element = elementRef.target;
+      if (element?.mounted == true) {
+        if (isObserving) {
+          _observerCallbacks[element!]?[this]?.call();
         } else {
-          elementRef.target!.markNeedsBuild();
+          element!.markNeedsBuild();
         }
       } else {
         unsub();
+        _finalizer.detach(detachToken);
         $$widgetSubscribers$$.remove(key);
-        callbacks?.remove(key);
+        if (element != null) {
+          _observerCallbacks[element]?[this] = null;
+        }
       }
     }
 
@@ -140,8 +147,8 @@ extension WidgetUtils<T> on BaseBeacon<T> {
       () {
         unsub();
         $$widgetSubscribers$$.remove(key);
-        callbacks?.remove(key);
       },
+      detach: detachToken,
     );
     // coverage:ignore-end
 
