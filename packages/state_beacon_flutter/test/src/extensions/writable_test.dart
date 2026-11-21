@@ -193,4 +193,39 @@ void main() {
     expect(hasNotifier(name), isFalse);
     expect(name.listenersCount, 0);
   });
+
+  test(
+    'toValueNotifier should not add duplicate listeners that overwrite '
+    'user listener mutations',
+    () {
+      final beacon = Beacon.writable(0);
+      final vn1 = beacon.toValueNotifier();
+      vn1.addListener(() {
+        if (vn1.value == 1) {
+          beacon.value = 99;
+        }
+      });
+
+      // Calling toValueNotifier() again returns the same notifier and must
+      // not append a duplicate write-back listener after user listeners.
+      final vn2 = beacon.toValueNotifier();
+      expect(identical(vn1, vn2), isTrue);
+
+      beacon.value = 1;
+      BeaconScheduler.flush();
+
+      expect(
+        beacon.value,
+        99,
+        reason: 'A second toValueNotifier() call must not attach a duplicate '
+            'listener that overwrites mutations made by user listeners.',
+      );
+
+      // External writes to the ValueNotifier still sync back to the beacon.
+      vn1.value = 42;
+      expect(beacon.value, 42);
+
+      beacon.dispose();
+    },
+  );
 }

@@ -21,7 +21,7 @@ bool hasNotifier(BaseBeacon<dynamic> beacon) {
   return _vnCache.containsKey(beacon.hashCode);
 }
 
-ValueNotifier<T> _toValueNotifier<T>(ReadableBeacon<T> beacon) {
+ValueNotifierBeacon<T> _toValueNotifier<T>(ReadableBeacon<T> beacon) {
   final key = beacon.hashCode;
 
   final existing = _vnCache[key];
