@@ -17,6 +17,7 @@ class ValueNotifierBeacon<T> extends ValueNotifier<T> {
   bool get isDisposed => _isDisposed;
 
   void addDisposeCallback(VoidCallback callback) {
+    if (_isDisposed) return;
     disposeListeners.add(callback);
   }
 
@@ -50,9 +51,10 @@ class ValueNotifierBeacon<T> extends ValueNotifier<T> {
     if (_isDisposed) return;
     _isDisposed = true;
 
-    for (final cb in disposeListeners) {
+    for (final cb in List<VoidCallback>.of(disposeListeners)) {
       cb();
     }
+    disposeListeners.clear();
     super.dispose();
   }
 }

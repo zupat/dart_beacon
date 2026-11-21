@@ -25,4 +25,35 @@ void main() {
 
     expect(called, 2);
   });
+
+  test('should clear disposeListeners after dispose', () {
+    final beacon = ValueNotifierBeacon(0)..addDisposeCallback(() {});
+
+    expect(beacon.disposeListeners, hasLength(1));
+
+    beacon.dispose();
+
+    expect(
+      beacon.disposeListeners,
+      isEmpty,
+      reason: 'disposeListeners should be cleared on dispose to avoid '
+          'retaining closures.',
+    );
+  });
+
+  test(
+    'should not throw ConcurrentModificationError when a dispose callback '
+    'modifies disposeListeners',
+    () {
+      final beacon = ValueNotifierBeacon(0);
+      var secondRan = false;
+
+      beacon
+        ..addDisposeCallback(() => beacon.addDisposeCallback(() {}))
+        ..addDisposeCallback(() => secondRan = true);
+
+      expect(beacon.dispose, returnsNormally);
+      expect(secondRan, isTrue);
+    },
+  );
 }
