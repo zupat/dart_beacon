@@ -115,4 +115,21 @@ void main() {
 
     expect(called, 1);
   });
+
+  test('should not notify when putIfAbsent() finds an existing key', () {
+    final data = Beacon.hashMap<String, int>({'a': 1});
+    var called = 0;
+
+    final unsub = data.subscribe((_) => called++, startNow: false);
+
+    expect(data.putIfAbsent('a', () => 99), 1);
+    BeaconScheduler.flush();
+    expect(called, 0);
+
+    expect(data.putIfAbsent('b', () => 2), 2);
+    BeaconScheduler.flush();
+    expect(called, 1);
+
+    unsub();
+  });
 }

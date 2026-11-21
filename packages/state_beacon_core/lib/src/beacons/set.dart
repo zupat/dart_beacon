@@ -34,8 +34,9 @@ class SetBeacon<E> extends WritableBeacon<Set<E>> {
   /// print(dateTimes.length);
   /// ```
   void add(E value) {
-    _value.add(value);
-    _setValue(_value, force: true);
+    if (_value.add(value)) {
+      _setValue(_value, force: true);
+    }
   }
 
   /// Adds all elements in [iterable] to this set.
