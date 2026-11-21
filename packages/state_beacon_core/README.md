@@ -457,7 +457,13 @@ You can also use `Ref.scoped` if you wish to provide a top level beacon without 
 
 ```dart
 final countRef = Ref.scoped((ctx) => Beacon.writable(0));
-final doubledCountRef = Ref.scoped((ctx) => Beacon.derived(() => countRef(ctx).value * 2));
+final doubledCountRef = Ref.scoped((ctx) {
+  // Resolve dependent refs eagerly in the factory, not inside lazy closures
+  // like Beacon.derived/future/stream, so lite_ref tracks the dependency for
+  // auto-disposal and override eviction.
+  final count = countRef(ctx);
+  return Beacon.derived(() => count.value * 2);
+});
 
 class CounterText extends StatelessWidget {
   const CounterText({super.key});
@@ -851,7 +857,7 @@ beacons that share the same creation logic but have different arguments.
 -   `Arg`: The type of the argument used to identify individual beacons within the family.
 -   `BeaconType`: The type of the beacon in the family.
 
-If `cache` is `true`, created beacons are cached. Default is `false`.
+If `cache` is `true`, created beacons are cached. Default is `true`.
 
 Example:
 
@@ -960,9 +966,9 @@ bufferBeacon.wrap(count, then: (value) {
   bufferBeacon.add(value.toString());
 });
 
-print(bufferBeacon.buffer); // Outputs: ['5']
+print(bufferBeacon.currentBuffer.value); // Outputs: ['5']
 count.value = 10;
-print(bufferBeacon.buffer); // Outputs: ['5', '10']
+print(bufferBeacon.currentBuffer.value); // Outputs: ['5', '10']
 ```
 
 This method is available on all writable beacons, including BufferedBeacons; and can wrap any beacon since all beacons are readable.
@@ -1218,7 +1224,7 @@ expect(c.isDisposed, true);
 
 `Effects` and `Subscriptions` are not synchronous, their execution is controlled by a scheduler. When a dependency of an `effect` changes, it is added to a queue and the scheduler decides when is the best time to flush the queue. By default, the queue is flushed with a DARTVM microtask which runs on the next loop; this can be changed by setting a custom scheduler.
 
-A 60fps scheduler is included, this limits processing effects to 60 times per second. This can be done by calling `BeaconScheduler.use60FpsScheduler();` in the `main` function. You can also create your own custom scheduler for more advanced use cases. eg: `Gaming`: Synchronize flushing with your game loop.
+A 60fps scheduler is included, this limits processing effects to 60 times per second. This can be done by calling `BeaconScheduler.use60fpsScheduler();` in the `main` function. You can also create your own custom scheduler for more advanced use cases. eg: `Gaming`: Synchronize flushing with your game loop.
 
 When testing **synchronous** code, it is necessary to flush the queue manually. This can be done by calling `BeaconScheduler.flush();` in your test.
 
