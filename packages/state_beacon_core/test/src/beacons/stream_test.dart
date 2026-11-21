@@ -523,4 +523,28 @@ void main() {
     expect(await nextFuture, 2);
     s.dispose();
   });
+
+  test('should not emit unhandled zone error when stream errors after toFuture',
+      () async {
+    final errors = <Object>[];
+
+    await runZonedGuarded(() async {
+      final controller = StreamController<int>();
+      final s = Beacon.stream(() => controller.stream, shouldSleep: false);
+      BeaconScheduler.flush();
+      controller.add(1);
+      expect(await s.toFuture(), 1);
+
+      controller.addError(Exception('stream boom'));
+      await delay(k10ms);
+      expect(s.isError, isTrue);
+
+      s.dispose();
+      await controller.close();
+    }, (e, _) {
+      errors.add(e);
+    });
+
+    expect(errors, isEmpty);
+  });
 }

@@ -58,7 +58,11 @@ abstract class AsyncBeacon<T> extends ReadableBeacon<AsyncValue<T>>
       if (newValue case final AsyncData<T> data) {
         compl.peek().complete(data.value);
       } else if (newValue case AsyncError(:final error, :final stackTrace)) {
-        compl.peek().completeError(error, stackTrace);
+        final current = compl.peek();
+        // Prevent uncaught zone errors when nobody is actively awaiting this
+        // future; callers that do await current.future still receive the error.
+        current.future.ignore();
+        current.completeError(error, stackTrace);
       }
     }
 

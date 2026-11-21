@@ -1944,4 +1944,23 @@ void main() {
     expect(await f.toFuture(resetIfError: false), 2);
     f.dispose();
   });
+
+  test('should not emit unhandled zone error on later AsyncError after toFuture',
+      () async {
+    final errors = <Object>[];
+
+    await runZonedGuarded(() async {
+      final f = Beacon.future(() async => 1, shouldSleep: false);
+      expect(await f.toFuture(), 1);
+
+      f.overrideWith(() async => throw Exception('later boom'));
+      await delay(k10ms * 2);
+      expect(f.isError, isTrue);
+      f.dispose();
+    }, (e, _) {
+      errors.add(e);
+    });
+
+    expect(errors, isEmpty);
+  });
 }
