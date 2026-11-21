@@ -718,6 +718,7 @@ void main() {
 
     expect(b.isDisposed, isTrue);
     expect(a.isDisposed, isFalse);
+    expect(a.listenersCount, 0);
   });
 
   test('onDispose callback can unregister itself during dispose', () {
