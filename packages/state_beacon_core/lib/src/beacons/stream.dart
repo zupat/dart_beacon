@@ -31,6 +31,10 @@ class StreamBeacon<T> extends AsyncBeacon<T> {
   /// Exposes this as a [Future] that can be awaited in a future beacon.
   /// This will trigger a re-run of the derived beacon when its state changes.
   Future<T> toFuture() {
+    if (_sleeping) {
+      _wakeUp();
+    }
+
     if (_completer == null) {
       // first time
       final completer = Completer<T>();

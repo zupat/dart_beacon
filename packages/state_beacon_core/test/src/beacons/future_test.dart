@@ -1863,4 +1863,85 @@ void main() {
 
     expect(f1.isDisposed, true);
   });
+
+  test('manualStart beacon should not auto-start on read after effect unsubs',
+      () async {
+    var ran = 0;
+    final f = Beacon.future(
+      () async {
+        ran++;
+        return 42;
+      },
+      manualStart: true,
+    );
+
+    final unsub = Beacon.effect(() => f.value);
+    BeaconScheduler.flush();
+    unsub();
+    await delay(k10ms);
+
+    expect(f.isIdle, isTrue);
+    BeaconScheduler.flush();
+    await delay(k10ms);
+    expect(ran, 0);
+    f.dispose();
+  });
+
+  test('idle beacon should not auto-start on read after effect unsubs',
+      () async {
+    var ran = 0;
+    final f = Beacon.future(() async {
+      return ++ran;
+    });
+
+    final unsub = Beacon.effect(() => f.value);
+    BeaconScheduler.flush();
+    await delay(k10ms);
+    expect(ran, 1);
+
+    f.idle();
+    unsub();
+    await delay(k10ms);
+
+    expect(f.isIdle, isTrue);
+    BeaconScheduler.flush();
+    await delay(k10ms);
+    expect(ran, 1);
+    f.dispose();
+  });
+
+  test('updateWith should retain its result when beacon is sleeping', () async {
+    final f = Beacon.future(() async => 1);
+    final unsub = Beacon.effect(() => f.value);
+    BeaconScheduler.flush();
+    await delay(k10ms);
+    expect(f.unwrapValue(), 1);
+
+    unsub();
+    await delay(k10ms); // beacon is now asleep
+
+    await f.updateWith(() async {
+      await delay(k10ms);
+      return 999;
+    });
+    await delay(k10ms);
+
+    expect(f.unwrapValue(), 999);
+    f.dispose();
+  });
+
+  test('toFuture(resetIfError: false) should wake a sleeping beacon', () async {
+    final count = Beacon.writable(1);
+    final f = Beacon.future(() async => count.value);
+    final unsub = Beacon.effect(() => f.value);
+    BeaconScheduler.flush();
+    expect(await f.toFuture(resetIfError: false), 1);
+
+    unsub();
+    await delay(k10ms); // beacon is now asleep
+
+    count.value = 2;
+    expect(await f.toFuture(resetIfError: false), 2);
+    f.dispose();
+  });
 }

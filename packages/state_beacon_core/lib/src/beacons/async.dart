@@ -25,12 +25,14 @@ abstract class AsyncBeacon<T> extends ReadableBeacon<AsyncValue<T>>
   /// to .updateWith.
   Future<void> _updateQueue = Future.value();
 
+  T? get _rawLastData => _value.lastData;
+
   void _setLoadingWithLastData() {
-    _setValue(AsyncLoading()..setLastData(lastData));
+    _setValue(AsyncLoading()..setLastData(_rawLastData));
   }
 
   void _setErrorWithLastData(Object error, [StackTrace? stackTrace]) {
-    _setValue(AsyncError(error, stackTrace)..setLastData(lastData));
+    _setValue(AsyncError(error, stackTrace)..setLastData(_rawLastData));
   }
 
   Stream<T> Function() _compute;

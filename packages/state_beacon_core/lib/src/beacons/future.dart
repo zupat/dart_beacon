@@ -64,9 +64,10 @@ class FutureBeacon<T> extends AsyncBeacon<T> {
     T? optimisticResult,
   }) async {
     final loadCount = _loadCount;
+    _sleeping = false;
     late final T? previousState;
     if (optimisticResult != null) {
-      previousState = lastData;
+      previousState = _rawLastData;
       _setValue(AsyncData(optimisticResult));
     } else {
       _setLoadingWithLastData();
@@ -100,7 +101,8 @@ class FutureBeacon<T> extends AsyncBeacon<T> {
   /// The beacon will have to be started manually to resume.
   void idle() {
     _loadCount++;
-    _setValue(AsyncIdle()..setLastData(lastData));
+    _sleeping = false;
+    _setValue(AsyncIdle()..setLastData(_rawLastData));
     _cancel();
   }
 
@@ -131,6 +133,10 @@ class FutureBeacon<T> extends AsyncBeacon<T> {
   ///   return '$fname $lname';
   /// });
   Future<T> toFuture({bool resetIfError = true}) {
+    if (_sleeping) {
+      _wakeUp();
+    }
+
     if (_completer == null) {
       // first time
       final completer = Completer<T>();
