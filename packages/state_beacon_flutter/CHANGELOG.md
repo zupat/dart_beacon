@@ -16,6 +16,20 @@
 
 - [Chore] Depend on `state_beacon_core ^3.1.4`.
 
+### Core fixes
+
+- [Fix] Subscriptions and effects no longer run after disposal, run cleanups untracked, and stay responsive after a throw. `next()` no longer throws on back-to-back updates.
+
+- [Fix] `dispose()` is safe to call twice, and pending timers and streams are cancelled (debounced, throttled, buffered, progress, and stream-backed beacons).
+
+- [Fix] `FutureBeacon`/`StreamBeacon`: `toFuture()` wakes a sleeping beacon and `reset()` discards in-flight updates.
+
+- [Fix] Beacons that override `==` are no longer confused with each other when wrapping or deriving.
+
+- [Fix] `Beacon.untracked` no longer tracks reads inside a derived beacon, and `AsyncValue.tryCatch` no longer writes to a disposed beacon.
+
+- [Fix] General hardening of the core.
+
 ### Behavioural changes
 
 - `observe` no longer invokes the callback with a null previous value before a lazy beacon has a value.
