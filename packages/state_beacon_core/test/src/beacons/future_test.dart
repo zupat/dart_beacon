@@ -1945,7 +1945,8 @@ void main() {
     f.dispose();
   });
 
-  test('should not emit unhandled zone error on later AsyncError after toFuture',
+  test(
+      'should not emit unhandled zone error on later AsyncError after toFuture',
       () async {
     final errors = <Object>[];
 
@@ -1962,5 +1963,30 @@ void main() {
     });
 
     expect(errors, isEmpty);
+  });
+
+  test('reset should synchronously invalidate a queued updateWith', () async {
+    addTearDown(BeaconScheduler.useAsyncScheduler);
+    final f = Beacon.future(
+      () async {
+        await delay(k10ms * 2);
+        return 1;
+      },
+      shouldSleep: false,
+    );
+
+    BeaconScheduler.flush();
+    await delay(k10ms * 4);
+    expect(f.unwrapValue(), 1);
+
+    BeaconScheduler.use60fpsScheduler();
+    final upd = f.updateWith(() async => 999);
+    f.reset();
+    await upd;
+
+    expect(f.isLoading, isTrue);
+    await delay(k10ms * 6);
+    expect(f.unwrapValue(), 1);
+    f.dispose();
   });
 }

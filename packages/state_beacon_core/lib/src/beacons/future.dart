@@ -21,6 +21,7 @@ class FutureBeacon<T> extends AsyncBeacon<T> {
 
   /// Resets the beacon by executing the future again.
   void reset() {
+    _loadCount++;
     _cancel();
     _wakeUp();
   }
