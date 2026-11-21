@@ -5,6 +5,8 @@ import 'package:state_beacon_flutter/src/value_notifier_beacon.dart';
 import 'package:state_beacon_flutter/state_beacon_flutter.dart'
     show TextEditingBeacon;
 
+export 'value_notifier.dart';
+
 part 'beacon_controller.dart';
 part 'beacon_group.dart';
 part 'readable.dart';
