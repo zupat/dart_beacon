@@ -30,6 +30,8 @@ class Subscription<T> implements Consumer {
   /// The callback that runs when the producer changes.
   final void Function(T) fn;
 
+  bool _isDisposed = false;
+
   @override
   List<Producer<dynamic>?> sources = [];
 
@@ -37,6 +39,7 @@ class Subscription<T> implements Consumer {
   Status _status = DIRTY;
 
   void _schedule() {
+    if (_isDisposed) return;
     _effectQueue.add(this);
     _flushFn();
   }
@@ -46,25 +49,31 @@ class Subscription<T> implements Consumer {
 
   @override
   void update() {
+    if (_isDisposed) return;
+
+    // Mark clean before invoking user code so that a write performed inside
+    // fn() arrives as a fresh notification and a throwing fn() cannot leave
+    // us wedged at DIRTY.
+    _status = CLEAN;
+
     if (!producer.isEmpty) {
       fn(producer.peek());
     }
-
-    // After the update, set the status to
-    // clean since we've processed the latest value.
-    _status = CLEAN;
   }
 
   /// Disposes of the subscription.
   @override
   void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
     // Remove this subscription from the producer's observer list.
     producer._removeObserver(this);
-    _effectQueue.remove(this);
+    _effectQueue.removeWhere((consumer) => identical(consumer, this));
   }
 
   @override
   void markDirty() {
+    if (_isDisposed) return;
     if (_status == CLEAN) {
       _status = DIRTY;
       _schedule();

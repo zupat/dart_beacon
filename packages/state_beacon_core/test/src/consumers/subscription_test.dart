@@ -184,4 +184,46 @@ void main() {
 
     expect(subCalled, 1);
   });
+
+  test('should receive updates triggered by mutating producer inside callback',
+      () {
+    final a = Beacon.writable(0);
+    final seen = <int>[];
+
+    final unsub = a.subscribe(
+      (v) {
+        seen.add(v);
+        if (v == 1) a.value = 2;
+      },
+      startNow: false,
+    );
+
+    a.value = 1;
+    BeaconScheduler.flush();
+
+    expect(seen, [1, 2]);
+    unsub();
+  });
+
+  test('should recover and receive future updates after callback throws', () {
+    final a = Beacon.writable(0);
+    final seen = <int>[];
+
+    final unsub = a.subscribe(
+      (v) {
+        if (v == 1) throw StateError('callback error');
+        seen.add(v);
+      },
+      startNow: false,
+    );
+
+    a.value = 1;
+    expect(BeaconScheduler.flush, throwsStateError);
+
+    a.value = 2;
+    BeaconScheduler.flush();
+
+    expect(seen, [2]);
+    unsub();
+  });
 }
