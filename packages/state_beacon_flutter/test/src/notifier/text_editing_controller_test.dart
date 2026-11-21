@@ -104,4 +104,33 @@ void main() {
       beacon.dispose();
     },
   );
+
+  test(
+    'BeaconGroup.onCreate hook should see initial controller text and '
+    'preserve mutations',
+    () {
+      final group = BeaconGroup();
+      String? controllerTextInHook;
+
+      group.onCreate((b) {
+        if (b is TextEditingBeacon) {
+          controllerTextInHook = b.controller.text;
+          b.text = 'updated-in-hook';
+        }
+      });
+
+      final beacon = group.textEditing(text: 'initial');
+
+      expect(
+        controllerTextInHook,
+        'initial',
+        reason: 'Controller must be initialized with initial text before '
+            'group.add(this) notifies onCreate hooks.',
+      );
+      expect(beacon.text, 'updated-in-hook');
+      expect(beacon.controller.text, 'updated-in-hook');
+
+      group.disposeAll();
+    },
+  );
 }

@@ -4,6 +4,8 @@ import 'package:state_beacon_core/state_beacon_core.dart';
 /// This is a wrapper around a [TextEditingController] that
 /// allows you to hook into the controller's lifecycle.
 class _TextEditingController extends TextEditingController {
+  _TextEditingController({super.text});
+
   VoidCallback? disposeCallback;
   bool _disposed = false;
 
@@ -20,12 +22,12 @@ class _TextEditingController extends TextEditingController {
 class TextEditingBeacon extends WritableBeacon<TextEditingValue> {
   /// @macro [TextEditingBeacon]
   TextEditingBeacon({String? text, BeaconGroup? group, super.name})
-      : super(
+      : _controller = _TextEditingController(text: text),
+        super(
           initialValue: text == null
               ? TextEditingValue.empty
               : TextEditingValue(text: text),
         ) {
-    group?.add(this);
     var syncingToController = false;
     var syncingToBeacon = false;
 
@@ -57,12 +59,14 @@ class TextEditingBeacon extends WritableBeacon<TextEditingValue> {
           syncingToController = false;
         }
       },
+      startNow: false,
     );
 
     _controller.disposeCallback = dispose;
+    group?.add(this);
   }
 
-  late final _controller = _TextEditingController();
+  final _TextEditingController _controller;
 
   /// The current [TextEditingController].
   TextEditingController get controller => _controller;
