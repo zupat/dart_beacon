@@ -4,7 +4,9 @@ part of '../producer.dart';
 /// re-executes whenever one changes.
 class Effect with Consumer {
   /// Creates a new [Effect].
-  Effect(this._compute, {String? name}) : _name = name {
+  Effect(Function compute, {String? name})
+      : _compute = compute as Object? Function(),
+        _name = name {
     _schedule();
   }
 
@@ -12,9 +14,9 @@ class Effect with Consumer {
   @override
   String get name => _name ?? 'Effect';
 
-  final Function _compute;
+  final Object? Function() _compute;
 
-  Function? _disposeChild;
+  void Function()? _disposeChild;
   bool _isDisposed = false;
 
   void _schedule() {
@@ -46,11 +48,10 @@ class Effect with Consumer {
     }
   }
 
-  void _runCleanup(Function cleanup) {
+  void _runCleanup(void Function() cleanup) {
     final prevConsumer = currentConsumer;
     currentConsumer = null;
     try {
-      // ignore: avoid_dynamic_calls
       cleanup();
     } finally {
       currentConsumer = prevConsumer;
@@ -83,18 +84,16 @@ class Effect with Consumer {
     currentRunId = ++_nextRunId;
 
     try {
-      // ignore: avoid_dynamic_calls
       final cleanup = _compute();
 
       if (_isDisposed) {
-        if (cleanup is Function) {
-          // ignore: avoid_dynamic_calls
+        if (cleanup is void Function()) {
           cleanup();
         }
         return;
       }
 
-      if (cleanup is Function) {
+      if (cleanup is void Function()) {
         _disposeChild = cleanup;
       }
 
