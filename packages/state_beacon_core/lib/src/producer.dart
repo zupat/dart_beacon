@@ -194,7 +194,8 @@ abstract class Producer<T> implements Disposable {
       }
       return true;
     }());
-    currentConsumer?.startWatching(this);
+    final consumer = currentConsumer;
+    if (consumer != null) _trackRead(consumer, this);
     return _value;
   }
 
@@ -273,7 +274,10 @@ abstract class Producer<T> implements Disposable {
   }
 
   void _removeObserver(Consumer observer) {
-    BeaconObserver.instance?.onStopWatch(observer.name, this);
+    assert(() {
+      BeaconObserver.instance?.onStopWatch(observer.name, this);
+      return true;
+    }());
     if (_notifying > 0) {
       _observers = List<Consumer>.of(_observers);
     }

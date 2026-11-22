@@ -80,14 +80,9 @@ class SyncSubscription<T> implements Consumer {
 
   @override
   void markCheck() => throw UnimplementedError();
-  @override
-  Producer<dynamic>? _producerAtIndex(int index) => throw UnimplementedError();
 
   @override
   void stopWatchingAllAfter(int index) => throw UnimplementedError();
-
-  @override
-  void startWatching(Producer<dynamic> source) => throw UnimplementedError();
 
   @override
   String get name => 'SyncSubscription<${_producer!.name}>';

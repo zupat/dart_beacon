@@ -91,11 +91,6 @@ class Subscription<T> implements Consumer {
   // these should never be called
   // coverage:ignore-start
   @override
-  Producer<dynamic>? _producerAtIndex(int index) {
-    throw UnimplementedError();
-  }
-
-  @override
   void stale(Status newStatus) => throw UnimplementedError();
 
   @override
@@ -103,11 +98,6 @@ class Subscription<T> implements Consumer {
 
   @override
   void stopWatchingAllAfter(int index) {
-    throw UnimplementedError();
-  }
-
-  @override
-  void startWatching(Producer<dynamic> source) {
     throw UnimplementedError();
   }
 

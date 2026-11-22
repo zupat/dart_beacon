@@ -13,8 +13,7 @@ class DerivedSubscription<T> implements Consumer {
     // upstream changes are not swallowed by DerivedBeacon.stale()'s guard.
     if (!startNow &&
         !producer.isEmpty &&
-        producer._status != CLEAN &&
-        !producer._hadError) {
+        (producer._status == CHECK || producer._status == DIRTY)) {
       producer.updateIfNecessary();
     }
 
@@ -194,17 +193,7 @@ class DerivedSubscription<T> implements Consumer {
   void markDirty() => throw UnimplementedError();
 
   @override
-  Producer<dynamic>? _producerAtIndex(int index) {
-    throw UnimplementedError();
-  }
-
-  @override
   void stopWatchingAllAfter(int index) {
-    throw UnimplementedError();
-  }
-
-  @override
-  void startWatching(Producer<dynamic> source) {
     throw UnimplementedError();
   }
 
