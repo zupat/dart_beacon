@@ -73,7 +73,7 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
     final prevGetsIndex = currentGetsIndex;
 
     currentConsumer = this;
-    currentGets = [];
+    currentGets = null;
     currentGetsIndex = 0;
 
     // Assigned inside the try; only read below when no exception was thrown.
@@ -91,23 +91,21 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
       _isEmpty = false;
 
       // if the sources have changed, update source & observer links
-      if (currentGets.isNotEmpty) {
+      final gets = currentGets;
+      if (gets != null) {
         // remove all old Sources' .observers links to us
         stopWatchingAllAfter(currentGetsIndex);
 
         if (sources.isNotEmpty && currentGetsIndex > 0) {
-          sources.length = currentGetsIndex + currentGets.length;
-          for (var i = 0; i < currentGets.length; i++) {
-            sources[currentGetsIndex + i] = currentGets[i];
-          }
+          sources.length = currentGetsIndex;
+          sources.addAll(gets);
         } else {
-          sources = currentGets;
+          sources = gets;
         }
 
         // Add ourselves to the end of the parent .observers array
         for (var i = currentGetsIndex; i < sources.length; i++) {
-          final source = sources[i]!;
-          source._observers.add(this);
+          sources[i]._observers.add(this);
         }
       } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
         // remove all old sources' .observers links to us
@@ -131,10 +129,11 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
       _hadError = true;
       // If the very first run failed after reading one or more sources,
       // subscribe to them so subsequent source changes can trigger recovery.
-      if (sources.isEmpty && currentGets.isNotEmpty) {
-        sources = currentGets;
+      final gets = currentGets;
+      if (sources.isEmpty && gets != null) {
+        sources = gets;
         for (var i = 0; i < sources.length; i++) {
-          sources[i]!._observers.add(this);
+          sources[i]._observers.add(this);
         }
       }
       rethrow;
@@ -162,7 +161,7 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
   void dispose() {
     if (_isDisposed) return;
     for (final source in sources) {
-      source!._removeObserver(this);
+      source._removeObserver(this);
     }
     sources.clear();
     super.dispose();

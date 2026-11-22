@@ -7,7 +7,7 @@ mixin Consumer {
   String get name;
 
   /// The list of [Producer]s that this consumer is currently watching.
-  List<Producer<dynamic>?> sources = [];
+  List<Producer<dynamic>> sources = [];
   var _status = DIRTY;
 
   /// Handles the status of the consumer when a producer changes.
@@ -27,7 +27,7 @@ mixin Consumer {
 
     if (_status == CHECK) {
       for (final source in sources) {
-        if (source!._isDerived) {
+        if (source._isDerived) {
           (source as DerivedBeacon).updateIfNecessary();
 
           if (_status == DIRTY) {
@@ -50,7 +50,7 @@ mixin Consumer {
     if (sources.isEmpty) return;
 
     for (var i = index; i < sources.length; i++) {
-      final source = sources[i]!;
+      final source = sources[i];
       // Use _removeObserver so producer hooks (e.g. auto-sleep) run when a
       // conditional dependency is dropped.
       source._removeObserver(this);
@@ -66,13 +66,13 @@ mixin Consumer {
 
   /// Start watching a new source.
   void startWatching(Producer<dynamic> source) {
-    // we have to check if currentGets is empty because if it's not
+    // we have to check if currentGets is null because if it's not
     // then we changed sources in the past so we can't just increment
     // we can only increment when sources are in the same order
     // Compare by identity: two distinct producers can override `==` (e.g.
     // RawStreamBeacon with the same options) while watching different streams.
     // Reusing the old source then leaves us subscribed to the wrong beacon.
-    if (currentGets.isEmpty &&
+    if (currentGets == null &&
         identical(_producerAtIndex(currentGetsIndex), source)) {
       currentGetsIndex++;
     } else {
@@ -80,7 +80,7 @@ mixin Consumer {
         BeaconObserver.instance?.onWatch(name, source);
         return true;
       }());
-      currentGets.add(source);
+      (currentGets ??= []).add(source);
     }
   }
 

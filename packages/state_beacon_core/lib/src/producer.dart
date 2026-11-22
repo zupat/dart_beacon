@@ -80,7 +80,8 @@ part 'untracked.dart';
 Consumer? currentConsumer;
 
 /// The current list of producers accessed when evaluating a reactive function.
-List<Producer<dynamic>?> currentGets = [];
+/// Allocated lazily only when accessed sources diverge from the previous run.
+List<Producer<dynamic>>? currentGets;
 
 /// The current index of this producer in the consumer's list of producers.
 int currentGetsIndex = 0;

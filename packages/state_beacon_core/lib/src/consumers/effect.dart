@@ -77,7 +77,7 @@ class Effect with Consumer {
     final prevGetsIndex = currentGetsIndex;
 
     currentConsumer = this;
-    currentGets = [];
+    currentGets = null;
     currentGetsIndex = 0;
 
     try {
@@ -96,22 +96,20 @@ class Effect with Consumer {
         _disposeChild = cleanup;
       }
 
-      if (currentGets.isNotEmpty) {
+      final gets = currentGets;
+      if (gets != null) {
         stopWatchingAllAfter(currentGetsIndex);
 
         if (sources.isNotEmpty && currentGetsIndex > 0) {
-          sources.length = currentGetsIndex + currentGets.length;
-          for (var i = 0; i < currentGets.length; i++) {
-            sources[currentGetsIndex + i] = currentGets[i];
-          }
+          sources.length = currentGetsIndex;
+          sources.addAll(gets);
         } else {
-          sources = currentGets;
+          sources = gets;
         }
 
         // Add ourselves to the end of the parent .observers array
         for (var i = currentGetsIndex; i < sources.length; i++) {
-          final source = sources[i]!;
-          source._observers.add(this);
+          sources[i]._observers.add(this);
         }
       } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
         stopWatchingAllAfter(currentGetsIndex);
@@ -141,7 +139,7 @@ class Effect with Consumer {
     _effectQueue.removeWhere((consumer) => identical(consumer, this));
     // remove ourselves from the .observers list of all sources
     for (final source in sources) {
-      source!._removeObserver(this);
+      source._removeObserver(this);
     }
     sources.clear();
   }

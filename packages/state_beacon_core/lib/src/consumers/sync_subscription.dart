@@ -27,7 +27,7 @@ class SyncSubscription<T> implements Consumer {
   final void Function(T) fn;
 
   @override
-  List<Producer<dynamic>?> sources = [];
+  List<Producer<dynamic>> sources = [];
 
   @override
   Status _status = DIRTY;
