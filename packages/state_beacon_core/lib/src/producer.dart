@@ -86,6 +86,12 @@ List<Producer<dynamic>>? currentGets;
 /// The current index of this producer in the consumer's list of producers.
 int currentGetsIndex = 0;
 
+/// Monotonic counter identifying each reactive evaluation run.
+int _nextRunId = 0;
+
+/// The run ID of the currently executing consumer evaluation.
+int currentRunId = 0;
+
 /// The base class for all beacons.
 abstract class Producer<T> implements Disposable {
   /// Creates a new [Producer].
@@ -152,6 +158,7 @@ abstract class Producer<T> implements Disposable {
   late T _value;
   List<Consumer> _observers;
   int _notifying = 0;
+  int _lastReadRun = 0;
 
   final List<VoidCallback> _disposeCallbacks = [];
   var _isDisposed = false;

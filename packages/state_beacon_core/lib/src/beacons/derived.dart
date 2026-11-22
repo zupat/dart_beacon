@@ -83,10 +83,12 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
     final prevConsumer = currentConsumer;
     final prevGets = currentGets;
     final prevGetsIndex = currentGetsIndex;
+    final prevRunId = currentRunId;
 
     currentConsumer = this;
     currentGets = null;
     currentGetsIndex = 0;
+    currentRunId = ++_nextRunId;
 
     // Assigned inside the try; only read below when no exception was thrown.
     late final bool didUpdate;
@@ -156,6 +158,7 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
       currentGets = prevGets;
       currentGetsIndex = prevGetsIndex;
       currentConsumer = prevConsumer;
+      currentRunId = prevRunId;
     }
 
     // Notify observers only after the capture context has been restored.

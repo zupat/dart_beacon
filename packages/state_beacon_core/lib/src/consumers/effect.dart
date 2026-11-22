@@ -75,10 +75,12 @@ class Effect with Consumer {
     final prevConsumer = currentConsumer;
     final prevGets = currentGets;
     final prevGetsIndex = currentGetsIndex;
+    final prevRunId = currentRunId;
 
     currentConsumer = this;
     currentGets = null;
     currentGetsIndex = 0;
+    currentRunId = ++_nextRunId;
 
     try {
       // ignore: avoid_dynamic_calls
@@ -119,6 +121,7 @@ class Effect with Consumer {
       currentGets = prevGets;
       currentGetsIndex = prevGetsIndex;
       currentConsumer = prevConsumer;
+      currentRunId = prevRunId;
 
       // We've rerun with the latest values from all of our sources (or failed
       // and need to remain responsive to future updates).

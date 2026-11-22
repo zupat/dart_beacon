@@ -66,6 +66,9 @@ mixin Consumer {
 
   /// Start watching a new source.
   void startWatching(Producer<dynamic> source) {
+    if (source._lastReadRun == currentRunId) return;
+    source._lastReadRun = currentRunId;
+
     // we have to check if currentGets is null because if it's not
     // then we changed sources in the past so we can't just increment
     // we can only increment when sources are in the same order
