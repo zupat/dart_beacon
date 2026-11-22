@@ -92,12 +92,14 @@ int _nextRunId = 0;
 /// The run ID of the currently executing consumer evaluation.
 int currentRunId = 0;
 
+// Shared empty sentinel (growable rather than const so AOT keeps _observers
+// monomorphic _GrowableList for direct indexed loads). Never mutated directly.
+final _emptyObservers = <Consumer>[];
+
 /// The base class for all beacons.
 abstract class Producer<T> implements Disposable {
   /// Creates a new [Producer].
-  Producer({T? initialValue, String? name})
-      : _name = name,
-        _observers = [] {
+  Producer({T? initialValue, String? name}) : _name = name {
     // we don't want to set an initial value for derived, even
     // if the type is nullable.
     if (initialValue != null || (!_isDerived && _isNullable)) {
@@ -159,20 +161,22 @@ abstract class Producer<T> implements Disposable {
   T? get previousValue => _previousValue;
 
   late T _value;
-  List<Consumer> _observers;
+  List<Consumer> _observers = _emptyObservers;
   int _notifying = 0;
   int _lastReadRun = 0;
 
-  final List<VoidCallback> _disposeCallbacks = [];
+  List<VoidCallback>? _disposeCallbacks;
   var _isDisposed = false;
 
   /// Returns true if the beacon has been disposed.
   bool get isDisposed => _isDisposed;
 
+  Set<int>? _widgetSubscribers;
+
   /// The hashcode of all widgets subscribed to this beacon.
   /// This should not be used directly.
   @Deprecated('This is an internal property. DO NOT USE IT DIRECTLY.')
-  final $$widgetSubscribers$$ = <int>{};
+  Set<int> get $$widgetSubscribers$$ => _widgetSubscribers ??= <int>{};
 
   /// Return the current value of the beacon without subscribing to it.
   T peek() => _value;
@@ -236,6 +240,10 @@ abstract class Producer<T> implements Disposable {
   }
 
   void _addObserver(Consumer observer) {
+    if (identical(_observers, _emptyObservers)) {
+      _observers = [observer];
+      return;
+    }
     if (_notifying > 0) {
       _observers = List<Consumer>.of(_observers);
     }
@@ -281,6 +289,7 @@ abstract class Producer<T> implements Disposable {
       BeaconObserver.instance?.onStopWatch(observer.name, this);
       return true;
     }());
+    if (identical(_observers, _emptyObservers)) return;
     if (_notifying > 0) {
       _observers = List<Consumer>.of(_observers);
     }
@@ -292,10 +301,10 @@ abstract class Producer<T> implements Disposable {
   VoidCallback onDispose(VoidCallback callback) {
     assert(!_isDisposed, 'Cannot add a dispose callback to a disposed beacon.');
 
-    _disposeCallbacks.add(callback);
+    (_disposeCallbacks ??= []).add(callback);
 
     return () {
-      _disposeCallbacks.remove(callback);
+      _disposeCallbacks?.remove(callback);
     };
   }
 
@@ -308,17 +317,19 @@ abstract class Producer<T> implements Disposable {
     if (_isDisposed) return;
     _isDisposed = true;
     final observers = _observers;
-    _observers = [];
+    _observers = _emptyObservers;
     for (var i = 0; i < observers.length; i++) {
       observers[i]._sourceDisposed(this);
     }
-    // ignore: deprecated_member_use_from_same_package
-    $$widgetSubscribers$$.clear();
+    _widgetSubscribers?.clear();
     _previousValue = null;
-    for (final callback in List<VoidCallback>.of(_disposeCallbacks)) {
-      callback();
+    final callbacks = _disposeCallbacks;
+    if (callbacks != null) {
+      _disposeCallbacks = null;
+      for (final callback in List<VoidCallback>.of(callbacks)) {
+        callback();
+      }
     }
-    _disposeCallbacks.clear();
   }
 
   @override

@@ -1,5 +1,9 @@
 part of 'producer.dart';
 
+// Shared empty sentinel (growable rather than const so AOT keeps sources
+// monomorphic _GrowableList for direct indexed loads). Never mutated directly.
+final _emptySources = <Producer<dynamic>>[];
+
 /// This class represents anything that can consume a [Producer].
 /// This includes [DerivedBeacon] and [Subscription] and [Effect].
 mixin Consumer {
@@ -7,7 +11,7 @@ mixin Consumer {
   String get name;
 
   /// The list of [Producer]s that this consumer is currently watching.
-  List<Producer<dynamic>> sources = [];
+  List<Producer<dynamic>> sources = _emptySources;
   var _status = DIRTY;
 
   /// Handles the status of the consumer when a producer changes.

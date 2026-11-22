@@ -145,9 +145,11 @@ class Effect with Consumer {
     _effectQueue.removeWhere((consumer) => identical(consumer, this));
     // remove ourselves from the .observers list of all sources
     final srcs = sources;
-    for (var i = 0; i < srcs.length; i++) {
-      srcs[i]._removeObserver(this);
+    if (srcs.isNotEmpty) {
+      sources = _emptySources;
+      for (var i = 0; i < srcs.length; i++) {
+        srcs[i]._removeObserver(this);
+      }
     }
-    srcs.clear();
   }
 }

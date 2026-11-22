@@ -33,7 +33,7 @@ class Subscription<T> implements Consumer {
   bool _isDisposed = false;
 
   @override
-  List<Producer<dynamic>> sources = [];
+  List<Producer<dynamic>> sources = _emptySources;
 
   @override
   Status _status = DIRTY;

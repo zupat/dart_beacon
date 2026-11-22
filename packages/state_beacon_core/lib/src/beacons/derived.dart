@@ -208,10 +208,12 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
     if (_isDisposed) return;
     _status = DISPOSED;
     final srcs = sources;
-    for (var i = 0; i < srcs.length; i++) {
-      srcs[i]._removeObserver(this);
+    if (srcs.isNotEmpty) {
+      sources = _emptySources;
+      for (var i = 0; i < srcs.length; i++) {
+        srcs[i]._removeObserver(this);
+      }
     }
-    srcs.clear();
     super.dispose();
   }
 }
