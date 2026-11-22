@@ -62,10 +62,18 @@ class DerivedSubscription<T> implements Consumer {
   @override
   Status _status = DIRTY;
 
+  @override
+  Consumer? _prevQueued;
+
+  @override
+  Consumer? _nextQueued;
+
+  @override
+  bool _inQueue = false;
+
   void _schedule() {
     if (_isDisposed) return;
-    _effectQueue.add(this);
-    _flushFn();
+    _enqueueEffect(this);
   }
 
   @override
@@ -170,10 +178,7 @@ class DerivedSubscription<T> implements Consumer {
     _isDisposed = true;
     // Remove this subscription from the producer's observer list.
     producer._removeObserver(this);
-    // The subscription can be queued more than once (forced first run plus a
-    // later source change), so remove every entry to prevent it from running
-    // after disposal.
-    _effectQueue.removeWhere((consumer) => identical(consumer, this));
+    _dequeueEffect(this);
   }
 
   @override

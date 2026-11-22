@@ -33,6 +33,15 @@ class SyncSubscription<T> implements Consumer {
   Status _status = DIRTY;
 
   @override
+  Consumer? _prevQueued;
+
+  @override
+  Consumer? _nextQueued;
+
+  @override
+  bool _inQueue = false;
+
+  @override
   void update() {
     if (!_producer!.isEmpty) {
       fn(_producer!.peek());

@@ -21,8 +21,7 @@ class Effect with Consumer {
 
   void _schedule() {
     if (_isDisposed) return;
-    _effectQueue.add(this);
-    _flushFn();
+    _enqueueEffect(this);
   }
 
   @override
@@ -142,7 +141,7 @@ class Effect with Consumer {
     if (disposeChild != null) {
       _runCleanup(disposeChild);
     }
-    _effectQueue.removeWhere((consumer) => identical(consumer, this));
+    _dequeueEffect(this);
     // remove ourselves from the .observers list of all sources
     final srcs = sources;
     if (srcs.isNotEmpty) {

@@ -38,10 +38,18 @@ class Subscription<T> implements Consumer {
   @override
   Status _status = DIRTY;
 
+  @override
+  Consumer? _prevQueued;
+
+  @override
+  Consumer? _nextQueued;
+
+  @override
+  bool _inQueue = false;
+
   void _schedule() {
     if (_isDisposed) return;
-    _effectQueue.add(this);
-    _flushFn();
+    _enqueueEffect(this);
   }
 
   @override
@@ -68,7 +76,7 @@ class Subscription<T> implements Consumer {
     _isDisposed = true;
     // Remove this subscription from the producer's observer list.
     producer._removeObserver(this);
-    _effectQueue.removeWhere((consumer) => identical(consumer, this));
+    _dequeueEffect(this);
   }
 
   @override

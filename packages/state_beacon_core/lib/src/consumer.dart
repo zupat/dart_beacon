@@ -14,6 +14,11 @@ mixin Consumer {
   List<Producer<dynamic>> sources = _emptySources;
   var _status = DIRTY;
 
+  /// Intrusive doubly-linked pointers for the effect scheduler queue.
+  Consumer? _prevQueued;
+  Consumer? _nextQueued;
+  bool _inQueue = false;
+
   /// Handles the status of the consumer when a producer changes.
   void stale(Status newStatus);
 
