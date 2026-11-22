@@ -40,7 +40,7 @@ mixin BeaconWrapper<InputT, OutputT> on ReadableBeacon<OutputT> {
       callback,
       startNow: startNow,
     );
-    _observers.add(sub);
+    _addObserver(sub);
     return sub.dispose;
   }
 }

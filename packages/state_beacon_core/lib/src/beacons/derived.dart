@@ -58,8 +58,20 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
       _hadError = false;
       _status = newStatus;
 
-      for (var i = 0; i < _observers.length; i++) {
-        _observers[i].markCheck();
+      final observers = _observers;
+      final len = observers.length;
+      if (len == 0) return;
+      if (len == 1) {
+        observers[0].markCheck();
+        return;
+      }
+      _notifying++;
+      try {
+        for (var i = 0; i < len; i++) {
+          observers[i].markCheck();
+        }
+      } finally {
+        _notifying--;
       }
     }
   }
@@ -105,7 +117,7 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
 
         // Add ourselves to the end of the parent .observers array
         for (var i = currentGetsIndex; i < sources.length; i++) {
-          sources[i]._observers.add(this);
+          sources[i]._addObserver(this);
         }
       } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
         // remove all old sources' .observers links to us
@@ -133,7 +145,7 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
       if (sources.isEmpty && gets != null) {
         sources = gets;
         for (var i = 0; i < sources.length; i++) {
-          sources[i]._observers.add(this);
+          sources[i]._addObserver(this);
         }
       }
       rethrow;

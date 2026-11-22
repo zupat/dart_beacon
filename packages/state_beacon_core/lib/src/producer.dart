@@ -150,7 +150,8 @@ abstract class Producer<T> implements Disposable {
   T? get previousValue => _previousValue;
 
   late T _value;
-  final List<Consumer> _observers;
+  List<Consumer> _observers;
+  int _notifying = 0;
 
   final List<VoidCallback> _disposeCallbacks = [];
   var _isDisposed = false;
@@ -206,15 +207,28 @@ abstract class Producer<T> implements Disposable {
   }
 
   void _notifyListeners() {
-    final len = _observers.length;
+    final observers = _observers;
+    final len = observers.length;
     if (len == 0) return;
     if (len == 1) {
-      _observers[0].markDirty();
+      observers[0].markDirty();
       return;
     }
-    for (final observer in List<Consumer>.of(_observers)) {
-      observer.markDirty();
+    _notifying++;
+    try {
+      for (var i = 0; i < len; i++) {
+        observers[i].markDirty();
+      }
+    } finally {
+      _notifying--;
     }
+  }
+
+  void _addObserver(Consumer observer) {
+    if (_notifying > 0) {
+      _observers = List<Consumer>.of(_observers);
+    }
+    _observers.add(observer);
   }
 
   /// Subscribes to changes in the beacon
@@ -235,7 +249,7 @@ abstract class Producer<T> implements Disposable {
         startNow: startNow,
       );
 
-      _observers.add(sub);
+      _addObserver(sub);
 
       return sub.dispose;
     }
@@ -246,13 +260,16 @@ abstract class Producer<T> implements Disposable {
       startNow: startNow,
     );
 
-    _observers.add(sub);
+    _addObserver(sub);
 
     return sub.dispose;
   }
 
   void _removeObserver(Consumer observer) {
     BeaconObserver.instance?.onStopWatch(observer.name, this);
+    if (_notifying > 0) {
+      _observers = List<Consumer>.of(_observers);
+    }
     _observers.remove(observer);
   }
 
@@ -276,10 +293,11 @@ abstract class Producer<T> implements Disposable {
   void dispose() {
     if (_isDisposed) return;
     _isDisposed = true;
-    for (final observer in List<Consumer>.of(_observers)) {
-      observer._sourceDisposed(this);
+    final observers = _observers;
+    _observers = [];
+    for (var i = 0; i < observers.length; i++) {
+      observers[i]._sourceDisposed(this);
     }
-    _observers.clear();
     // ignore: deprecated_member_use_from_same_package
     $$widgetSubscribers$$.clear();
     _previousValue = null;

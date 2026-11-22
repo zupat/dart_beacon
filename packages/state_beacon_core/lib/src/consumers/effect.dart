@@ -109,7 +109,7 @@ class Effect with Consumer {
 
         // Add ourselves to the end of the parent .observers array
         for (var i = currentGetsIndex; i < sources.length; i++) {
-          sources[i]._observers.add(this);
+          sources[i]._addObserver(this);
         }
       } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
         stopWatchingAllAfter(currentGetsIndex);
