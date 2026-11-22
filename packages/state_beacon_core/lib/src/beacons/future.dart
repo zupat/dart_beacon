@@ -13,6 +13,9 @@ class FutureBeacon<T> extends AsyncBeacon<T> {
     super.name,
   }) : super(() => compute().asStream());
 
+  @override
+  String get _defaultName => 'FutureBeacon<$T>';
+
   /// Replaces the current callback and resets the beacon
   void overrideWith(FutureCallback<T> compute) {
     _compute = () => compute().asStream();

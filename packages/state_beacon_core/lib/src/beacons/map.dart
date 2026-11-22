@@ -8,6 +8,9 @@ class MapBeacon<K, V> extends WritableBeacon<Map<K, V>> {
     super.name,
   }) : super(initialValue: initialValue);
 
+  @override
+  String get _defaultName => 'MapBeacon<$K,$V>';
+
   /// The value for the given [key], or `null` if [key] is not in the map.
   ///
   /// alias for `peek()[key]`

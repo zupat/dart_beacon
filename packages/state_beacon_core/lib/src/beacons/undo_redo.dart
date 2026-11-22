@@ -12,6 +12,10 @@ class UndoRedoBeacon<T> extends WritableBeacon<T> {
 
   /// the maximum number of history entries to keep
   final int historyLimit;
+
+  @override
+  String get _defaultName =>
+      _wasLazy ? 'LazyUndoRedoBeacon<$T>' : 'UndoRedoBeacon<$T>';
   List<T> _history = [];
   int _currentHistoryIndex = -1;
 

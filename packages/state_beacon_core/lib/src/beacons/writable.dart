@@ -5,6 +5,9 @@ class WritableBeacon<T> extends ReadableBeacon<T> with BeaconWrapper<T, T> {
   /// @macro [WritableBeacon]
   WritableBeacon({super.initialValue, super.name});
 
+  @override
+  String get _defaultName => _wasLazy ? 'LazyWritable<$T>' : 'Writable<$T>';
+
   set value(T newValue) {
     set(newValue);
   }

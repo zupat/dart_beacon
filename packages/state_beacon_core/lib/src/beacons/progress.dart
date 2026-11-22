@@ -64,6 +64,9 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
     }
   }
 
+  @override
+  String get _defaultName => 'ProgressBeacon<$T>';
+
   /// The current status of the beacon.
   late final status = Beacon.writable(
     onStart != null ? ProgressStatus.stopped : ProgressStatus.running,

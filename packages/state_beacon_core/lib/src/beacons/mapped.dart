@@ -16,6 +16,9 @@ class _MappedBeacon<I, O> extends ReadableBeacon<O> with BeaconWrapper<I, O> {
   final MapFilter<I, O> mapFN;
 
   @override
+  String get _defaultName => runtimeType.toString();
+
+  @override
   void _onNewValueFromWrapped(I value) {
     _setValue(mapFN(value), force: true);
   }

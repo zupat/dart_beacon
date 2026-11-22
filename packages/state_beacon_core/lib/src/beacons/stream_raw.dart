@@ -30,6 +30,9 @@ class RawStreamBeacon<T> extends ReadableBeacon<T> with _AutoSleep<T, T> {
   /// Whether the beacon has lazy initialization.
   final bool isLazy;
 
+  @override
+  String get _defaultName => 'RawStreamBeacon<$T>';
+
   /// Whether the beacon should sleep when there are no observers.
   @override
   final bool shouldSleep;

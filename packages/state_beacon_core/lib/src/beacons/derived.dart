@@ -10,6 +10,9 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
   final T Function() _compute;
 
   @override
+  String get _defaultName => 'DerivedBeacon<$T>';
+
+  @override
   bool get _isDerived => true;
 
   @override

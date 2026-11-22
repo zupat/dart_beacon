@@ -12,6 +12,10 @@ class DebouncedBeacon<T> extends WritableBeacon<T> {
 
   final bool _allowFirst;
 
+  @override
+  String get _defaultName =>
+      _wasLazy ? 'LazyDebouncedBeacon<$T>' : 'DebouncedBeacon<$T>';
+
   /// The duration to debounce updates for.
   final Duration? duration;
 

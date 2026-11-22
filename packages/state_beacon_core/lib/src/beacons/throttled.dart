@@ -34,6 +34,10 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
 
   Timer? _timer;
 
+  @override
+  String get _defaultName =>
+      _wasLazy ? 'LazyThrottledBeacon<$T>' : 'ThrottledBeacon<$T>';
+
   /// If true, values will be dropped while the beacon is blocked.
   /// If false, values will be buffered and
   /// emitted when the beacon is unblocked.

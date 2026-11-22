@@ -8,6 +8,9 @@ class SetBeacon<E> extends WritableBeacon<Set<E>> {
     super.name,
   }) : super(initialValue: initialValue);
 
+  @override
+  String get _defaultName => 'SetBeacon<$E>';
+
   /// Adds [value] to the set.
   ///
   /// Returns `true` if [value] (or an equal value) was not yet in the set.

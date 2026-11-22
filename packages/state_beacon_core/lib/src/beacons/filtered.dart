@@ -34,6 +34,10 @@ class FilteredBeacon<T> extends WritableBeacon<T>
   final bool _allowFirst;
 
   @override
+  String get _defaultName =>
+      _wasLazy ? 'LazyFilteredBeacon<$T>' : 'FilteredBeacon<$T>';
+
+  @override
   void set(T newValue, {bool force = false}) {
     if ((_isEmpty && _allowFirst) ||
         (_filter?.call(isEmpty ? null : peek(), newValue) ?? true)) {

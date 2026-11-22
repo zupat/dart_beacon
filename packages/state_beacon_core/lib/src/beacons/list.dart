@@ -10,6 +10,9 @@ class ListBeacon<E> extends WritableBeacon<List<E>> {
     super.name,
   }) : super(initialValue: initialValue);
 
+  @override
+  String get _defaultName => 'ListBeacon<$E>';
+
   /// Set the first element of the list.
   ///
   /// The list must be non-empty when accessing its first element.

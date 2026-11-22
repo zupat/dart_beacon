@@ -13,6 +13,10 @@ class TimestampBeacon<T> extends ReadableBeacon<TimestampValue<T>> {
               : null,
         );
 
+  @override
+  String get _defaultName =>
+      _wasLazy ? 'LazyTimestampBeacon<$T>' : 'TimestampBeacon<$T>';
+
   /// Set the value of this beacon.
   void set(T newValue) {
     _setValue((value: newValue, timestamp: DateTime.now()));

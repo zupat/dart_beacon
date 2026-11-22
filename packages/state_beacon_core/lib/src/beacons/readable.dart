@@ -10,6 +10,9 @@ class ReadableBeacon<T> extends Producer<T> {
     }());
   }
 
+  @override
+  String get _defaultName => 'Readable<$T>';
+
   StreamController<T>? _controller;
   VoidCallback? _unsubFromSelf;
 

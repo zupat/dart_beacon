@@ -100,12 +100,12 @@ abstract class Producer<T> implements Disposable {
         _observers = [] {
     // we don't want to set an initial value for derived, even
     // if the type is nullable.
-    final isNullableAndNotDerived = _isNullable && !_isDerived;
-
-    if (initialValue != null || isNullableAndNotDerived) {
+    if (initialValue != null || (!_isDerived && _isNullable)) {
       _initialValue = initialValue as T;
       _value = initialValue;
       _isEmpty = false;
+    } else {
+      _wasLazy = true;
     }
   }
 
@@ -136,14 +136,17 @@ abstract class Producer<T> implements Disposable {
   bool get _isNullable => null is T;
 
   var _isEmpty = true;
+  var _wasLazy = false;
 
   /// Returns true if the beacon has not been initialized.
   bool get isEmpty => _isEmpty;
 
-  final String? _name;
+  String? _name;
 
   /// The name of the beacon. For debugging purposes.
-  String get name => _name ?? runtimeType.toString();
+  String get name => _name ??= _defaultName;
+
+  String get _defaultName => runtimeType.toString();
 
   late final T _initialValue;
 
