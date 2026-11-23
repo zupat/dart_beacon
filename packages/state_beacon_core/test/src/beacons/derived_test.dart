@@ -508,4 +508,54 @@ void main() {
     expect(seen, [25]);
     unsub();
   });
+
+  test(
+    'should preserve error state when upstream derived '
+    'recomputes to same value',
+    () {
+      final raw = Beacon.writable(1);
+      final absVal = Beacon.derived(() => raw.value.abs());
+      final risky = Beacon.derived(() {
+        if (absVal.value == 2) throw StateError('bad value');
+        return absVal.value * 10;
+      });
+
+      // Establish an initial valid value, then enter ERROR state.
+      expect(risky.value, 10);
+      raw.value = 2;
+      expect(() => risky.value, throwsStateError);
+
+      // Changing raw from 2 -> -2 sends CHECK to risky, while absVal
+      // recomputes to the same value (2). risky must still rethrow instead of
+      // returning 10.
+      raw.value = -2;
+      expect(() => risky.value, throwsStateError);
+
+      // Once absVal changes to a valid value, risky recovers.
+      raw.value = 3;
+      expect(risky.value, 30);
+    },
+  );
+
+  test(
+    'should preserve initial error state when upstream derived '
+    'recomputes to same value',
+    () {
+      final raw = Beacon.writable(2);
+      final absVal = Beacon.derived(() => raw.value.abs());
+      final risky = Beacon.derived(() {
+        if (absVal.value == 2) throw StateError('bad initial value');
+        return absVal.value * 10;
+      });
+
+      expect(() => risky.value, throwsStateError);
+
+      // Must still throw StateError (not LateInitializationError).
+      raw.value = -2;
+      expect(() => risky.value, throwsStateError);
+
+      raw.value = 4;
+      expect(risky.value, 40);
+    },
+  );
 }

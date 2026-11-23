@@ -10,7 +10,9 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
   final T Function() _compute;
 
   @override
-  String get _defaultName => 'DerivedBeacon<$T>';
+  String get _defaultName => _isExactType<DerivedBeacon<T>>()
+      ? 'DerivedBeacon<$T>'
+      : super._defaultName;
 
   @override
   bool get _isDerived => true;
@@ -82,7 +84,7 @@ class DerivedBeacon<T> extends ReadableBeacon<T> with Consumer {
   @override
   void stale(Status newStatus) {
     if (_status < newStatus) {
-      _status = newStatus;
+      _status = _status == ERROR ? DIRTY : newStatus;
 
       final observers = _observers;
       final len = observers.length;
