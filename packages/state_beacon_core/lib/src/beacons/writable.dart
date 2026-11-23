@@ -13,13 +13,11 @@ class WritableBeacon<T> extends ReadableBeacon<T> with BeaconWrapper<T, T> {
   }) : super._();
 
   @override
-  String get _defaultName => _isExactType<WritableBeacon<T>>()
-      ? switch (_defaultNameMode) {
-          _defaultNameFromCreator => 'Writable<$T>',
-          _defaultNameFromLazyCreator => 'LazyWritable<$T>',
-          _ => 'WritableBeacon<$T>',
-        }
-      : super._defaultName;
+  String get _defaultName => switch (_defaultNameMode) {
+        _defaultNameFromCreator => 'Writable<$T>',
+        _defaultNameFromLazyCreator => 'LazyWritable<$T>',
+        _ => super._defaultName,
+      };
 
   set value(T newValue) {
     set(newValue);

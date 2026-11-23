@@ -11,11 +11,6 @@ class StreamBeacon<T> extends AsyncBeacon<T> {
     super.manualStart,
   });
 
-  @override
-  String get _defaultName => _isExactType<StreamBeacon<T>>()
-      ? 'StreamBeacon<$T>'
-      : super._defaultName;
-
   /// unsubscribes from the internal stream
   void unsubscribe() {
     unawaited(_sub?.cancel());

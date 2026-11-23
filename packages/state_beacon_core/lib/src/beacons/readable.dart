@@ -21,10 +21,8 @@ class ReadableBeacon<T> extends Producer<T> {
   VoidCallback? _unsubFromSelf;
 
   @override
-  String get _defaultName => _isExactType<ReadableBeacon<T>>()
-      ? (_defaultNameMode == _defaultNameFromCreator
-          ? 'Readable<$T>'
-          : 'ReadableBeacon<$T>')
+  String get _defaultName => _defaultNameMode == _defaultNameFromCreator
+      ? 'Readable<$T>'
       : super._defaultName;
 
   /// Returns a broadcast [Stream] that emits the current value

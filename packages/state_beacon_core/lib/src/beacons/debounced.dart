@@ -32,10 +32,8 @@ class DebouncedBeacon<T> extends WritableBeacon<T> {
   Timer? _debounceTimer;
 
   @override
-  String get _defaultName => _isExactType<DebouncedBeacon<T>>()
-      ? (_defaultNameMode == _defaultNameFromLazyCreator
-          ? 'LazyDebouncedBeacon<$T>'
-          : 'DebouncedBeacon<$T>')
+  String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
+      ? 'LazyDebouncedBeacon<$T>'
       : super._defaultName;
 
   @override

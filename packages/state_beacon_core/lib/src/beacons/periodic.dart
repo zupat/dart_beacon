@@ -19,11 +19,6 @@ class PeriodicBeacon<T> extends ReadableBeacon<T> {
   StreamSubscription<dynamic>? _subscription;
   var _count = 0;
 
-  @override
-  String get _defaultName => _isExactType<PeriodicBeacon<T>>()
-      ? 'PeriodicBeacon<$T>'
-      : super._defaultName;
-
   void _start() {
     _subscription = Stream<dynamic>.periodic(_period).listen((_) {
       if (_isDisposed) return;

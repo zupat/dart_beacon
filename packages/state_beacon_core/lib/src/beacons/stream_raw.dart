@@ -41,11 +41,6 @@ class RawStreamBeacon<T> extends ReadableBeacon<T> with _AutoSleep<T, T> {
   final void Function()? onDone;
   final Stream<T> Function() _compute;
 
-  @override
-  String get _defaultName => _isExactType<RawStreamBeacon<T>>()
-      ? 'RawStreamBeacon<$T>'
-      : super._defaultName;
-
   /// passed to the internal stream subscription
   final bool cancelOnError;
 

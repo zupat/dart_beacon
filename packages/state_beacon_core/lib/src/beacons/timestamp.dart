@@ -20,10 +20,8 @@ class TimestampBeacon<T> extends ReadableBeacon<TimestampValue<T>> {
         );
 
   @override
-  String get _defaultName => _isExactType<TimestampBeacon<T>>()
-      ? (_defaultNameMode == _defaultNameFromLazyCreator
-          ? 'LazyTimestampBeacon<$T>'
-          : 'TimestampBeacon<$T>')
+  String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
+      ? 'LazyTimestampBeacon<$T>'
       : super._defaultName;
 
   /// Set the value of this beacon.

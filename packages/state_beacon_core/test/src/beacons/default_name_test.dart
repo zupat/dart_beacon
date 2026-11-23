@@ -1,6 +1,10 @@
 import 'package:state_beacon_core/state_beacon_core.dart';
 import 'package:test/test.dart';
 
+class _CustomProducer extends Producer<int> {
+  _CustomProducer(int initialValue) : super(initialValue: initialValue);
+}
+
 class _CustomWritable extends WritableBeacon<int> {
   _CustomWritable(int initialValue) : super(initialValue: initialValue);
 }
@@ -11,6 +15,10 @@ class _CustomReadable extends ReadableBeacon<int> {
 
 class _CustomList extends ListBeacon<int> {
   _CustomList(super.initialValue);
+}
+
+class _CustomMap extends MapBeacon<String, int> {
+  _CustomMap(super.initialValue);
 }
 
 class _CustomDebounced extends DebouncedBeacon<int> {
@@ -88,14 +96,49 @@ void main() {
       'BufferedTimeBeacon<int>',
     );
 
+    final periodic = Beacon.periodic(
+      const Duration(seconds: 1),
+      (i) => i,
+    );
+    addTearDown(periodic.dispose);
+    expect(periodic.name, 'PeriodicBeacon<int>');
+
+    final progress = Beacon.progress<double>(
+      interval: const Duration(milliseconds: 100),
+      totalDuration: const Duration(seconds: 1),
+      onStart: () => 0,
+      initialValue: 0,
+      onProgress: (p) => p,
+    );
+    addTearDown(progress.dispose);
+    expect(progress.name, 'ProgressBeacon<double>');
+
+    final future = Beacon.future(() async => 1, manualStart: true);
+    addTearDown(future.dispose);
+    expect(future.name, 'FutureBeacon<int>');
+
+    final stream = Beacon.stream(Stream<int>.empty, manualStart: true);
+    addTearDown(stream.dispose);
+    expect(stream.name, 'StreamBeacon<int>');
+
+    final rawStream = Beacon.streamRaw(Stream<int>.empty, isLazy: true);
+    addTearDown(rawStream.dispose);
+    expect(rawStream.name, 'RawStreamBeacon<int>');
+
+    final mapped = Beacon.writable(1).map((v) => v.toString());
+    addTearDown(mapped.dispose);
+    expect(mapped.name, '_MappedBeacon<int, String>');
+
     expect(Beacon.writable(0, name: 'custom').name, 'custom');
     expect(Beacon.lazyWritable<int>(name: 'customLazy').name, 'customLazy');
   });
 
   test('external subclasses preserve their own runtimeType name', () {
+    expect(_CustomProducer(1).name, '_CustomProducer');
     expect(_CustomWritable(1).name, '_CustomWritable');
     expect(_CustomReadable(1).name, '_CustomReadable');
     expect(_CustomList([1]).name, '_CustomList');
+    expect(_CustomMap({'a': 1}).name, '_CustomMap');
     expect(_CustomDebounced(1).name, '_CustomDebounced');
   });
 

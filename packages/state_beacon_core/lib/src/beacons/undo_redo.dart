@@ -28,10 +28,8 @@ class UndoRedoBeacon<T> extends WritableBeacon<T> {
   int _currentHistoryIndex = -1;
 
   @override
-  String get _defaultName => _isExactType<UndoRedoBeacon<T>>()
-      ? (_defaultNameMode == _defaultNameFromLazyCreator
-          ? 'LazyUndoRedoBeacon<$T>'
-          : 'UndoRedoBeacon<$T>')
+  String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
+      ? 'LazyUndoRedoBeacon<$T>'
       : super._defaultName;
 
   /// Whether the beacon can be undone.

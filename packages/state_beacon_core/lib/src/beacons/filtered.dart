@@ -48,10 +48,8 @@ class FilteredBeacon<T> extends WritableBeacon<T>
   final bool _allowFirst;
 
   @override
-  String get _defaultName => _isExactType<FilteredBeacon<T>>()
-      ? (_defaultNameMode == _defaultNameFromLazyCreator
-          ? 'LazyFilteredBeacon<$T>'
-          : 'FilteredBeacon<$T>')
+  String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
+      ? 'LazyFilteredBeacon<$T>'
       : super._defaultName;
 
   @override

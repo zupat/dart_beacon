@@ -8,10 +8,6 @@ class SetBeacon<E> extends WritableBeacon<Set<E>> {
     super.name,
   }) : super(initialValue: initialValue);
 
-  @override
-  String get _defaultName =>
-      _isExactType<SetBeacon<E>>() ? 'SetBeacon<$E>' : super._defaultName;
-
   /// Adds [value] to the set.
   ///
   /// Returns `true` if [value] (or an equal value) was not yet in the set.

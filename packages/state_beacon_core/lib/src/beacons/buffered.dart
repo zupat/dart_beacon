@@ -68,11 +68,6 @@ class BufferedCountBeacon<T> extends BufferedBaseBeacon<T> {
   final int countThreshold;
 
   @override
-  String get _defaultName => _isExactType<BufferedCountBeacon<T>>()
-      ? 'BufferedCountBeacon<$T>'
-      : super._defaultName;
-
-  @override
   void add(T newValue) {
     _addToBuffer(newValue);
 
@@ -93,11 +88,6 @@ class BufferedTimeBeacon<T> extends BufferedBaseBeacon<T> {
   final Duration duration;
 
   Timer? _timer;
-
-  @override
-  String get _defaultName => _isExactType<BufferedTimeBeacon<T>>()
-      ? 'BufferedTimeBeacon<$T>'
-      : super._defaultName;
 
   @override
   void add(T newValue) {

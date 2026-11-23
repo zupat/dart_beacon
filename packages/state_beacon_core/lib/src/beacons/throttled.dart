@@ -55,10 +55,8 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
   final List<(T, bool)> _buffer = [];
 
   @override
-  String get _defaultName => _isExactType<ThrottledBeacon<T>>()
-      ? (_defaultNameMode == _defaultNameFromLazyCreator
-          ? 'LazyThrottledBeacon<$T>'
-          : 'ThrottledBeacon<$T>')
+  String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
+      ? 'LazyThrottledBeacon<$T>'
       : super._defaultName;
 
   void _processBuffer(Timer timer) {

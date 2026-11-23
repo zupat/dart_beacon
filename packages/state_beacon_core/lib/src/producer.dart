@@ -166,8 +166,6 @@ abstract class Producer<T> implements Disposable {
   /// The name of the beacon. For debugging purposes.
   String get name => _name ??= _defaultName;
 
-  bool _isExactType<X>() => runtimeType == X;
-
   String get _defaultName => runtimeType.toString();
 
   late final T _initialValue;
