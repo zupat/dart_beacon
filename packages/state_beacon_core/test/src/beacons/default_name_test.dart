@@ -81,6 +81,7 @@ void main() {
     expect(Beacon.list<int>([]).name, 'ListBeacon<int>');
     expect(Beacon.hashSet<int>({}).name, 'SetBeacon<int>');
     expect(Beacon.hashMap<String, int>({}).name, 'MapBeacon<String,int>');
+    expect(MapBeacon<String, int>({}).name, 'MapBeacon<String, int>');
     expect(Beacon.bufferedCount<int>(2).name, 'BufferedCountBeacon<int>');
     expect(
       Beacon.bufferedTime<int>(duration: const Duration(seconds: 1)).name,

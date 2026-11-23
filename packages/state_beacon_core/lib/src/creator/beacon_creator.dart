@@ -492,9 +492,10 @@ class _BeaconCreator {
     Map<K, V> initialValue, {
     String? name,
   }) =>
-      MapBeacon<K, V>(
+      MapBeacon<K, V>._(
         initialValue,
         name: name,
+        defaultNameMode: _defaultNameFromCreator,
       );
 
   /// Creates a [PeriodicBeacon] that emits values periodically.
