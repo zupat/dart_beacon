@@ -1989,4 +1989,50 @@ void main() {
     expect(f.unwrapValue(), 1);
     f.dispose();
   });
+
+  test('should not replace AsyncLoading redundantly on start or wake-up',
+      () async {
+    final dep = Beacon.writable(1);
+    final manual = Beacon.future(
+      () async {
+        final v = dep.value;
+        await delay(k1ms);
+        return v;
+      },
+      manualStart: true,
+    );
+
+    expect(manual.isIdle, isTrue);
+    manual.start();
+    final loadingOnStart = manual.peek();
+    expect(loadingOnStart, isA<AsyncLoading<int>>());
+
+    // First effect run should keep the same AsyncLoading instance
+    BeaconScheduler.flush();
+    expect(identical(manual.peek(), loadingOnStart), isTrue);
+
+    await delay(k10ms);
+    expect(manual.unwrapValue(), 1);
+
+    // Put beacon to sleep via effect watch + unwatch
+    final unsub = Beacon.effect(() => manual.value);
+    BeaconScheduler.flush();
+    unsub();
+    await delay(k1ms);
+
+    // Wake up: sets loading synchronously, then effect flush reuses it
+    dep.value = 2;
+    final loadingOnWake = manual.peek();
+    expect(loadingOnWake, isA<AsyncLoading<int>>());
+    expect(loadingOnWake.lastData, 1);
+
+    BeaconScheduler.flush();
+    expect(identical(manual.peek(), loadingOnWake), isTrue);
+
+    await delay(k10ms);
+    expect(manual.unwrapValue(), 2);
+
+    manual.dispose();
+    dep.dispose();
+  });
 }

@@ -24,7 +24,7 @@ class UndoRedoBeacon<T> extends WritableBeacon<T> {
   /// the maximum number of history entries to keep
   final int historyLimit;
 
-  List<T> _history = [];
+  final List<T> _history = [];
   int _currentHistoryIndex = -1;
 
   @override
@@ -74,7 +74,7 @@ class UndoRedoBeacon<T> extends WritableBeacon<T> {
     _currentHistoryIndex++;
     if (_currentHistoryIndex < _history.length) {
       // truncate the history if value is set after undo
-      _history = _history.sublist(0, _currentHistoryIndex);
+      _history.length = _currentHistoryIndex;
     }
     _history.add(newValue);
   }

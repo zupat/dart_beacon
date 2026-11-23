@@ -120,4 +120,30 @@ void main() {
 
     dispose();
   });
+
+  test('in-place truncation after undo does not mutate prior history snapshots',
+      () {
+    final beacon = Beacon.undoRedo<int>(0);
+    beacon.set(1);
+    beacon.set(2);
+    beacon.set(3);
+
+    final snapshotBefore = beacon.history;
+    expect(snapshotBefore, equals([0, 1, 2, 3]));
+
+    beacon.undo();
+    beacon.undo();
+    beacon.set(10);
+
+    expect(snapshotBefore, equals([0, 1, 2, 3]));
+    expect(beacon.history, equals([0, 1, 10]));
+    expect(beacon.canRedo, isFalse);
+
+    beacon.undo();
+    beacon.undo();
+    beacon.set(20);
+    expect(beacon.history, equals([0, 20]));
+    expect(beacon.canUndo, isTrue);
+    expect(beacon.canRedo, isFalse);
+  });
 }
