@@ -1,6 +1,6 @@
 // ignore_for_file: lines_longer_than_80_chars
 
-part of 'creator.dart';
+part of '../producer.dart';
 
 /// The class with all the methods for creating beacons.
 class _BeaconCreator {
@@ -18,9 +18,10 @@ class _BeaconCreator {
     T initialValue, {
     String? name,
   }) =>
-      WritableBeacon<T>(
+      WritableBeacon<T>._(
         initialValue: initialValue,
-        name: name ?? 'Writable<$T>',
+        name: name,
+        defaultNameMode: _defaultNameFromCreator,
       );
 
   /// Like `Beacon.writable` but behaves like a late variable.
@@ -31,9 +32,10 @@ class _BeaconCreator {
     T? initialValue,
     String? name,
   }) =>
-      WritableBeacon<T>(
+      WritableBeacon<T>._(
         initialValue: initialValue,
-        name: name ?? 'LazyWritable<$T>',
+        name: name,
+        defaultNameMode: _defaultNameFromLazyCreator,
       );
 
   /// Creates an immutable `ReadableBeacon` from a value.
@@ -54,9 +56,10 @@ class _BeaconCreator {
     T initialValue, {
     String? name,
   }) =>
-      ReadableBeacon<T>(
+      ReadableBeacon<T>._(
         initialValue: initialValue,
-        name: name ?? 'Readable<$T>',
+        name: name,
+        defaultNameMode: _defaultNameFromCreator,
       );
 
   /// Creates a `DebouncedBeacon` that will delay updates to its value based on
@@ -87,7 +90,7 @@ class _BeaconCreator {
       DebouncedBeacon<T>(
         initialValue: initialValue,
         duration: duration,
-        name: name ?? 'DebouncedBeacon<$T>',
+        name: name,
       );
 
   /// Like `Beacon.debounced` but behaves like a late variable.
@@ -102,11 +105,12 @@ class _BeaconCreator {
     bool allowFirst = false,
     String? name,
   }) =>
-      DebouncedBeacon<T>(
+      DebouncedBeacon<T>._(
         initialValue: initialValue,
         duration: duration,
         allowFirst: allowFirst,
-        name: name ?? 'LazyDebouncedBeacon<$T>',
+        name: name,
+        defaultNameMode: _defaultNameFromLazyCreator,
       );
 
   /// Creates a `ThrottledBeacon` that will limit the rate of updates to
@@ -143,7 +147,7 @@ class _BeaconCreator {
         initialValue: initialValue,
         duration: duration,
         dropBlocked: dropBlocked,
-        name: name ?? 'ThrottledBeacon<$T>',
+        name: name,
       );
 
   /// Like `Beacon.throttled` but behaves like a late variable. It must be set before it's read.
@@ -155,11 +159,12 @@ class _BeaconCreator {
     bool dropBlocked = true,
     String? name,
   }) =>
-      ThrottledBeacon<T>(
+      ThrottledBeacon<T>._(
         initialValue: initialValue,
         duration: duration,
         dropBlocked: dropBlocked,
-        name: name ?? 'LazyThrottledBeacon<$T>',
+        name: name,
+        defaultNameMode: _defaultNameFromLazyCreator,
       );
 
   /// Creates a `FilteredBeacon` that will only updates its value if it passes the filter criteria.
@@ -189,7 +194,7 @@ class _BeaconCreator {
     return FilteredBeacon<T>(
       initialValue: initialValue,
       filter: filter,
-      name: name ?? 'FilteredBeacon<$T>',
+      name: name,
     );
   }
 
@@ -204,11 +209,12 @@ class _BeaconCreator {
     bool allowFirst = false,
     String? name,
   }) {
-    return FilteredBeacon<T>(
+    return FilteredBeacon<T>._(
       initialValue: initialValue,
       filter: filter,
       allowFirst: allowFirst,
-      name: name ?? 'LazyFilteredBeacon<$T>',
+      name: name,
+      defaultNameMode: _defaultNameFromLazyCreator,
     );
   }
 
@@ -232,7 +238,7 @@ class _BeaconCreator {
   BufferedCountBeacon<T> bufferedCount<T>(int count, {String? name}) =>
       BufferedCountBeacon<T>(
         countThreshold: count,
-        name: name ?? 'BufferedCountBeacon<$T>',
+        name: name,
       );
 
   /// Creates a `BufferedTimeBeacon` that collects values over a specified time duration.
@@ -260,7 +266,7 @@ class _BeaconCreator {
   }) =>
       BufferedTimeBeacon<T>(
         duration: duration,
-        name: name ?? 'BufferedTimeBeacon<$T>',
+        name: name,
       );
 
   /// Creates an `UndoRedoBeacon` with an initial value and an optional history limit.
@@ -286,7 +292,7 @@ class _BeaconCreator {
     return UndoRedoBeacon<T>(
       initialValue: initialValue,
       historyLimit: historyLimit,
-      name: name ?? 'UndoRedoBeacon<$T>',
+      name: name,
     );
   }
 
@@ -298,10 +304,11 @@ class _BeaconCreator {
     int historyLimit = 10,
     String? name,
   }) {
-    return UndoRedoBeacon<T>(
+    return UndoRedoBeacon<T>._(
       initialValue: initialValue,
       historyLimit: historyLimit,
-      name: name ?? 'LazyUndoRedoBeacon<$T>',
+      name: name,
+      defaultNameMode: _defaultNameFromLazyCreator,
     );
   }
 
@@ -316,7 +323,7 @@ class _BeaconCreator {
   TimestampBeacon<T> timestamped<T>(T initialValue, {String? name}) =>
       TimestampBeacon<T>(
         initialValue: initialValue,
-        name: name ?? 'TimestampBeacon<$T>',
+        name: name,
       );
 
   /// Like `Beacon.timestamped` but behaves like a late variable. It must be set before it's read.
@@ -326,9 +333,10 @@ class _BeaconCreator {
     T? initialValue,
     String? name,
   }) =>
-      TimestampBeacon<T>(
+      TimestampBeacon<T>._(
         initialValue: initialValue,
-        name: name ?? 'LazyTimestampBeacon<$T>',
+        name: name,
+        defaultNameMode: _defaultNameFromLazyCreator,
       );
 
   /// Creates a `StreamBeacon` from a given stream.
@@ -359,7 +367,7 @@ class _BeaconCreator {
       cancelOnError: cancelOnError,
       manualStart: manualStart,
       shouldSleep: shouldSleep,
-      name: name ?? 'StreamBeacon<$T>',
+      name: name,
     );
   }
 
@@ -388,7 +396,7 @@ class _BeaconCreator {
       initialValue: initialValue,
       shouldSleep: shouldSleep,
       isLazy: isLazy,
-      name: name ?? 'RawStreamBeacon<$T>',
+      name: name,
     );
   }
 
@@ -413,7 +421,7 @@ class _BeaconCreator {
       future,
       manualStart: manualStart,
       shouldSleep: shouldSleep,
-      name: name ?? 'FutureBeacon<$T>',
+      name: name,
     );
   }
 
@@ -437,7 +445,7 @@ class _BeaconCreator {
   }) {
     final beacon = DerivedBeacon<T>(
       compute,
-      name: name ?? 'DerivedBeacon<$T>',
+      name: name,
     );
 
     return beacon;
@@ -464,7 +472,7 @@ class _BeaconCreator {
   /// ```
   ListBeacon<T> list<T>(List<T> initialValue, {String? name}) => ListBeacon<T>(
         initialValue,
-        name: name ?? 'ListBeacon<$T>',
+        name: name,
       );
 
   /// Creates a `SetBeacon` with an initial set value.
@@ -473,7 +481,7 @@ class _BeaconCreator {
   /// The `SetBeacon` provides methods to add, remove, and update items in the set and notifies listeners without having to make a copy.
   SetBeacon<T> hashSet<T>(Set<T> initialValue, {String? name}) => SetBeacon<T>(
         initialValue,
-        name: name ?? 'SetBeacon<$T>',
+        name: name,
       );
 
   /// Creates a `MapBeacon` with an initial map value.
@@ -484,9 +492,10 @@ class _BeaconCreator {
     Map<K, V> initialValue, {
     String? name,
   }) =>
-      MapBeacon<K, V>(
+      MapBeacon<K, V>._(
         initialValue,
-        name: name ?? 'MapBeacon<$K,$V>',
+        name: name,
+        defaultNameMode: _defaultNameFromCreator,
       );
 
   /// Creates a [PeriodicBeacon] that emits values periodically.

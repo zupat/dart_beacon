@@ -1,4 +1,4 @@
-part of 'creator.dart';
+part of '../producer.dart';
 
 /// An alternative to the global beacon creator ie: `Beacon.writable(0)`; that
 /// keeps track of all beacons and effects created so they can be disposed/reset together.

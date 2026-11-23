@@ -3,8 +3,19 @@ part of '../producer.dart';
 /// A beacon that allows undo/redo operations.
 class UndoRedoBeacon<T> extends WritableBeacon<T> {
   /// @macro [UndoRedoBeacon]
-  UndoRedoBeacon({T? initialValue, this.historyLimit = 10, super.name})
-      : super(initialValue: initialValue) {
+  UndoRedoBeacon({T? initialValue, int historyLimit = 10, String? name})
+      : this._(
+          initialValue: initialValue,
+          historyLimit: historyLimit,
+          name: name,
+        );
+
+  UndoRedoBeacon._({
+    T? initialValue,
+    this.historyLimit = 10,
+    super.name,
+    super.defaultNameMode,
+  }) : super._(initialValue: initialValue) {
     if (initialValue != null || _isNullable) {
       _addValueToHistory(initialValue as T);
     }
@@ -12,8 +23,14 @@ class UndoRedoBeacon<T> extends WritableBeacon<T> {
 
   /// the maximum number of history entries to keep
   final int historyLimit;
+
   List<T> _history = [];
   int _currentHistoryIndex = -1;
+
+  @override
+  String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
+      ? 'LazyUndoRedoBeacon<$T>'
+      : super._defaultName;
 
   /// Whether the beacon can be undone.
   bool get canUndo => _currentHistoryIndex > 0;

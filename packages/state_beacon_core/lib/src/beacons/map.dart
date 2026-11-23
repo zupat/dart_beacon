@@ -5,8 +5,19 @@ class MapBeacon<K, V> extends WritableBeacon<Map<K, V>> {
   /// @macro [MapBeacon]
   MapBeacon(
     Map<K, V> initialValue, {
+    String? name,
+  }) : this._(initialValue, name: name);
+
+  MapBeacon._(
+    Map<K, V> initialValue, {
     super.name,
-  }) : super(initialValue: initialValue);
+    super.defaultNameMode,
+  }) : super._(initialValue: initialValue);
+
+  @override
+  String get _defaultName => _defaultNameMode == _defaultNameFromCreator
+      ? 'MapBeacon<$K,$V>'
+      : super._defaultName;
 
   /// The value for the given [key], or `null` if [key] is not in the map.
   ///

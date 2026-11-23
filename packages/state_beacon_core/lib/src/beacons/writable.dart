@@ -3,7 +3,21 @@ part of '../producer.dart';
 /// A beacon that can be written to.
 class WritableBeacon<T> extends ReadableBeacon<T> with BeaconWrapper<T, T> {
   /// @macro [WritableBeacon]
-  WritableBeacon({super.initialValue, super.name});
+  WritableBeacon({T? initialValue, String? name})
+      : this._(initialValue: initialValue, name: name);
+
+  WritableBeacon._({
+    super.initialValue,
+    super.name,
+    super.defaultNameMode,
+  }) : super._();
+
+  @override
+  String get _defaultName => switch (_defaultNameMode) {
+        _defaultNameFromCreator => 'Writable<$T>',
+        _defaultNameFromLazyCreator => 'LazyWritable<$T>',
+        _ => super._defaultName,
+      };
 
   set value(T newValue) {
     set(newValue);

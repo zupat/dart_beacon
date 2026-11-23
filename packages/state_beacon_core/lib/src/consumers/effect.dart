@@ -2,9 +2,11 @@ part of '../producer.dart';
 
 /// A callback keeps track of its dependecies that
 /// re-executes whenever one changes.
-class Effect with Consumer {
+class Effect with _QueuedConsumer, Consumer {
   /// Creates a new [Effect].
-  Effect(this._compute, {String? name}) : _name = name {
+  Effect(Function compute, {String? name})
+      : _compute = compute as Object? Function(),
+        _name = name {
     _schedule();
   }
 
@@ -12,15 +14,14 @@ class Effect with Consumer {
   @override
   String get name => _name ?? 'Effect';
 
-  final Function _compute;
+  final Object? Function() _compute;
 
-  Function? _disposeChild;
+  void Function()? _disposeChild;
   bool _isDisposed = false;
 
   void _schedule() {
     if (_isDisposed) return;
-    _effectQueue.add(this);
-    _flushFn();
+    _enqueueEffect(this);
   }
 
   @override
@@ -46,11 +47,10 @@ class Effect with Consumer {
     }
   }
 
-  void _runCleanup(Function cleanup) {
+  void _runCleanup(void Function() cleanup) {
     final prevConsumer = currentConsumer;
     currentConsumer = null;
     try {
-      // ignore: avoid_dynamic_calls
       cleanup();
     } finally {
       currentConsumer = prevConsumer;
@@ -75,52 +75,55 @@ class Effect with Consumer {
     final prevConsumer = currentConsumer;
     final prevGets = currentGets;
     final prevGetsIndex = currentGetsIndex;
+    final prevRunId = currentRunId;
 
     currentConsumer = this;
-    currentGets = [];
+    currentGets = null;
     currentGetsIndex = 0;
+    currentRunId = ++_nextRunId;
 
     try {
-      // ignore: avoid_dynamic_calls
       final cleanup = _compute();
 
       if (_isDisposed) {
-        if (cleanup is Function) {
-          // ignore: avoid_dynamic_calls
+        if (cleanup is void Function()) {
           cleanup();
         }
         return;
       }
 
-      if (cleanup is Function) {
+      if (cleanup is void Function()) {
         _disposeChild = cleanup;
       }
 
-      if (currentGets.isNotEmpty) {
-        stopWatchingAllAfter(currentGetsIndex);
+      final gets = currentGets;
+      if (gets != null) {
+        final idx = currentGetsIndex;
+        stopWatchingAllAfter(idx);
 
-        if (sources.isNotEmpty && currentGetsIndex > 0) {
-          sources.length = currentGetsIndex + currentGets.length;
-          for (var i = 0; i < currentGets.length; i++) {
-            sources[currentGetsIndex + i] = currentGets[i];
-          }
+        if (sources.isNotEmpty && idx > 0) {
+          sources.length = idx;
+          sources.addAll(gets);
         } else {
-          sources = currentGets;
+          sources = gets;
         }
 
         // Add ourselves to the end of the parent .observers array
-        for (var i = currentGetsIndex; i < sources.length; i++) {
-          final source = sources[i]!;
-          source._observers.add(this);
+        final srcs = sources;
+        final len = srcs.length;
+        for (var i = idx; i < len; i++) {
+          srcs[i]._addObserver(this);
         }
       } else if (sources.isNotEmpty && currentGetsIndex < sources.length) {
-        stopWatchingAllAfter(currentGetsIndex);
-        sources.length = currentGetsIndex;
+        final idx = currentGetsIndex;
+        stopWatchingAllAfter(idx);
+        sources.length = idx;
       }
     } finally {
       currentGets = prevGets;
       currentGetsIndex = prevGetsIndex;
       currentConsumer = prevConsumer;
+      currentRunId = prevRunId;
 
       // We've rerun with the latest values from all of our sources (or failed
       // and need to remain responsive to future updates).
@@ -138,11 +141,14 @@ class Effect with Consumer {
     if (disposeChild != null) {
       _runCleanup(disposeChild);
     }
-    _effectQueue.removeWhere((consumer) => identical(consumer, this));
+    _dequeueEffect(this);
     // remove ourselves from the .observers list of all sources
-    for (final source in sources) {
-      source!._removeObserver(this);
+    final srcs = sources;
+    if (srcs.isNotEmpty) {
+      sources = _emptySources;
+      for (var i = 0; i < srcs.length; i++) {
+        srcs[i]._removeObserver(this);
+      }
     }
-    sources.clear();
   }
 }

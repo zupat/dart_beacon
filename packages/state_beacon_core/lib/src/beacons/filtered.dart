@@ -23,15 +23,34 @@ class FilteredBeacon<T> extends WritableBeacon<T>
     with ReadableFilteredBeacon<T> {
   /// @macro [FilteredBeacon]
   FilteredBeacon({
+    T? initialValue,
+    BeaconFilter<T>? filter,
+    String? name,
+    bool allowFirst = false,
+  }) : this._(
+          initialValue: initialValue,
+          filter: filter,
+          name: name,
+          allowFirst: allowFirst,
+        );
+
+  FilteredBeacon._({
     super.initialValue,
     BeaconFilter<T>? filter,
     super.name,
+    super.defaultNameMode,
     bool allowFirst = false,
-  }) : _allowFirst = allowFirst {
+  })  : _allowFirst = allowFirst,
+        super._() {
     _filter = filter;
   }
 
   final bool _allowFirst;
+
+  @override
+  String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
+      ? 'LazyFilteredBeacon<$T>'
+      : super._defaultName;
 
   @override
   void set(T newValue, {bool force = false}) {

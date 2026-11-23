@@ -1,7 +1,7 @@
 part of '../producer.dart';
 
 /// A subscription implementation specialized for [DerivedBeacon]s.
-class DerivedSubscription<T> implements Consumer {
+class DerivedSubscription<T> with _QueuedConsumer implements Consumer {
   /// Creates a new [DerivedSubscription].
   DerivedSubscription(
     this.producer,
@@ -13,8 +13,7 @@ class DerivedSubscription<T> implements Consumer {
     // upstream changes are not swallowed by DerivedBeacon.stale()'s guard.
     if (!startNow &&
         !producer.isEmpty &&
-        producer._status != CLEAN &&
-        !producer._hadError) {
+        (producer._status == CHECK || producer._status == DIRTY)) {
       producer.updateIfNecessary();
     }
 
@@ -58,15 +57,14 @@ class DerivedSubscription<T> implements Consumer {
   final void Function(T) fn;
 
   @override
-  List<Producer<dynamic>?> sources = [];
+  List<Producer<dynamic>> sources = _emptySources;
 
   @override
   Status _status = DIRTY;
 
   void _schedule() {
     if (_isDisposed) return;
-    _effectQueue.add(this);
-    _flushFn();
+    _enqueueEffect(this);
   }
 
   @override
@@ -171,10 +169,7 @@ class DerivedSubscription<T> implements Consumer {
     _isDisposed = true;
     // Remove this subscription from the producer's observer list.
     producer._removeObserver(this);
-    // The subscription can be queued more than once (forced first run plus a
-    // later source change), so remove every entry to prevent it from running
-    // after disposal.
-    _effectQueue.removeWhere((consumer) => identical(consumer, this));
+    _dequeueEffect(this);
   }
 
   @override
@@ -194,17 +189,7 @@ class DerivedSubscription<T> implements Consumer {
   void markDirty() => throw UnimplementedError();
 
   @override
-  Producer<dynamic>? _producerAtIndex(int index) {
-    throw UnimplementedError();
-  }
-
-  @override
   void stopWatchingAllAfter(int index) {
-    throw UnimplementedError();
-  }
-
-  @override
-  void startWatching(Producer<dynamic> source) {
     throw UnimplementedError();
   }
 

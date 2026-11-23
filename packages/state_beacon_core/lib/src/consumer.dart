@@ -1,5 +1,20 @@
 part of 'producer.dart';
 
+// Shared empty sentinel (growable rather than const so AOT keeps sources
+// monomorphic _GrowableList for direct indexed loads). Never mutated directly.
+final _emptySources = <Producer<dynamic>>[];
+
+/// Mixin for [Consumer]s scheduled via the effect queue.
+/// Kept separate from [Consumer] so non-queued consumers like [DerivedBeacon]
+/// and [SyncSubscription] do not carry queue pointers.
+mixin _QueuedConsumer {
+  _QueuedConsumer? _prevQueued;
+  _QueuedConsumer? _nextQueued;
+  bool _inQueue = false;
+
+  void updateIfNecessary();
+}
+
 /// This class represents anything that can consume a [Producer].
 /// This includes [DerivedBeacon] and [Subscription] and [Effect].
 mixin Consumer {
@@ -7,7 +22,7 @@ mixin Consumer {
   String get name;
 
   /// The list of [Producer]s that this consumer is currently watching.
-  List<Producer<dynamic>?> sources = [];
+  List<Producer<dynamic>> sources = _emptySources;
   var _status = DIRTY;
 
   /// Handles the status of the consumer when a producer changes.
@@ -26,8 +41,10 @@ mixin Consumer {
     if (_status == CLEAN) return;
 
     if (_status == CHECK) {
-      for (final source in sources) {
-        if (source!._isDerived) {
+      final srcs = sources;
+      for (var i = 0; i < srcs.length; i++) {
+        final source = srcs[i];
+        if (source._isDerived) {
           (source as DerivedBeacon).updateIfNecessary();
 
           if (_status == DIRTY) {
@@ -47,13 +64,14 @@ mixin Consumer {
 
   /// remove all old sources' .observers links to us
   void stopWatchingAllAfter(int index) {
-    if (sources.isEmpty) return;
+    final srcs = sources;
+    final len = srcs.length;
+    if (len == 0) return;
 
-    for (var i = index; i < sources.length; i++) {
-      final source = sources[i]!;
+    for (var i = index; i < len; i++) {
       // Use _removeObserver so producer hooks (e.g. auto-sleep) run when a
       // conditional dependency is dropped.
-      source._removeObserver(this);
+      srcs[i]._removeObserver(this);
     }
   }
 
@@ -64,36 +82,39 @@ mixin Consumer {
     Future.microtask(dispose);
   }
 
-  /// Start watching a new source.
-  void startWatching(Producer<dynamic> source) {
-    // we have to check if currentGets is empty because if it's not
-    // then we changed sources in the past so we can't just increment
-    // we can only increment when sources are in the same order
-    // Compare by identity: two distinct producers can override `==` (e.g.
-    // RawStreamBeacon with the same options) while watching different streams.
-    // Reusing the old source then leaves us subscribed to the wrong beacon.
-    if (currentGets.isEmpty &&
-        identical(_producerAtIndex(currentGetsIndex), source)) {
-      currentGetsIndex++;
-    } else {
-      assert(() {
-        BeaconObserver.instance?.onWatch(name, source);
-        return true;
-      }());
-      currentGets.add(source);
-    }
-  }
-
-  Producer<dynamic>? _producerAtIndex(int index) {
-    if (index < sources.length) {
-      return sources[index];
-    }
-    return null;
-  }
-
   /// Update the consumer.
   void update();
 
   /// Dispose the consumer.
   void dispose();
+}
+
+void _trackRead(Consumer consumer, Producer<dynamic> source) {
+  final runId = currentRunId;
+  if (source._lastReadRun == runId) return;
+  source._lastReadRun = runId;
+
+  // we have to check if currentGets is null because if it's not
+  // then we changed sources in the past so we can't just increment
+  // we can only increment when sources are in the same order
+  // Compare by identity: two distinct producers can override `==` (e.g.
+  // RawStreamBeacon with the same options) while watching different streams.
+  // Reusing the old source then leaves us subscribed to the wrong beacon.
+  final idx = currentGetsIndex;
+  final sources = consumer.sources;
+  if (currentGets == null &&
+      idx < sources.length &&
+      identical(sources[idx], source)) {
+    currentGetsIndex = idx + 1;
+    return;
+  }
+  _trackReadSlow(consumer, source);
+}
+
+void _trackReadSlow(Consumer consumer, Producer<dynamic> source) {
+  assert(() {
+    BeaconObserver.instance?.onWatch(consumer.name, source);
+    return true;
+  }());
+  (currentGets ??= []).add(source);
 }

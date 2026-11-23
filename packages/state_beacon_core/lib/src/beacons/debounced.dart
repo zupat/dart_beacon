@@ -4,11 +4,25 @@ part of '../producer.dart';
 class DebouncedBeacon<T> extends WritableBeacon<T> {
   /// @macro [DebouncedBeacon]
   DebouncedBeacon({
+    Duration? duration,
+    T? initialValue,
+    String? name,
+    bool allowFirst = false,
+  }) : this._(
+          duration: duration,
+          initialValue: initialValue,
+          name: name,
+          allowFirst: allowFirst,
+        );
+
+  DebouncedBeacon._({
     this.duration,
     super.initialValue,
     super.name,
+    super.defaultNameMode,
     bool allowFirst = false,
-  }) : _allowFirst = allowFirst;
+  })  : _allowFirst = allowFirst,
+        super._();
 
   final bool _allowFirst;
 
@@ -16,6 +30,11 @@ class DebouncedBeacon<T> extends WritableBeacon<T> {
   final Duration? duration;
 
   Timer? _debounceTimer;
+
+  @override
+  String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
+      ? 'LazyDebouncedBeacon<$T>'
+      : super._defaultName;
 
   @override
   void set(T newValue, {bool force = false}) {

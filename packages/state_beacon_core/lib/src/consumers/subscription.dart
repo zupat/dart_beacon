@@ -3,7 +3,7 @@
 part of '../producer.dart';
 
 /// A callback that runs when its [Producer] changes.
-class Subscription<T> implements Consumer {
+class Subscription<T> with _QueuedConsumer implements Consumer {
   /// Creates a new [Subscription].
   Subscription(
     this.producer,
@@ -33,15 +33,14 @@ class Subscription<T> implements Consumer {
   bool _isDisposed = false;
 
   @override
-  List<Producer<dynamic>?> sources = [];
+  List<Producer<dynamic>> sources = _emptySources;
 
   @override
   Status _status = DIRTY;
 
   void _schedule() {
     if (_isDisposed) return;
-    _effectQueue.add(this);
-    _flushFn();
+    _enqueueEffect(this);
   }
 
   @override
@@ -68,7 +67,7 @@ class Subscription<T> implements Consumer {
     _isDisposed = true;
     // Remove this subscription from the producer's observer list.
     producer._removeObserver(this);
-    _effectQueue.removeWhere((consumer) => identical(consumer, this));
+    _dequeueEffect(this);
   }
 
   @override
@@ -91,11 +90,6 @@ class Subscription<T> implements Consumer {
   // these should never be called
   // coverage:ignore-start
   @override
-  Producer<dynamic>? _producerAtIndex(int index) {
-    throw UnimplementedError();
-  }
-
-  @override
   void stale(Status newStatus) => throw UnimplementedError();
 
   @override
@@ -103,11 +97,6 @@ class Subscription<T> implements Consumer {
 
   @override
   void stopWatchingAllAfter(int index) {
-    throw UnimplementedError();
-  }
-
-  @override
-  void startWatching(Producer<dynamic> source) {
     throw UnimplementedError();
   }
 

@@ -1,8 +1,43 @@
 part of 'producer.dart';
 
-final _effectQueue = Queue<Consumer>();
+_QueuedConsumer? _queueHead;
+_QueuedConsumer? _queueTail;
 void Function() _flushFn = _asyncScheduler;
 bool _flushing = false;
+
+void _enqueueEffect(_QueuedConsumer consumer) {
+  if (consumer._inQueue) return;
+  consumer._inQueue = true;
+  final tail = _queueTail;
+  if (tail == null) {
+    _queueHead = consumer;
+    _queueTail = consumer;
+  } else {
+    consumer._prevQueued = tail;
+    tail._nextQueued = consumer;
+    _queueTail = consumer;
+  }
+  _flushFn();
+}
+
+void _dequeueEffect(_QueuedConsumer consumer) {
+  if (!consumer._inQueue) return;
+  final prev = consumer._prevQueued;
+  final next = consumer._nextQueued;
+  if (prev == null) {
+    _queueHead = next;
+  } else {
+    prev._nextQueued = next;
+  }
+  if (next == null) {
+    _queueTail = prev;
+  } else {
+    next._prevQueued = prev;
+  }
+  consumer._prevQueued = null;
+  consumer._nextQueued = null;
+  consumer._inQueue = false;
+}
 
 // coverage:ignore-start
 /// `Effects` are not synchronous, their execution is controlled by a scheduler.
@@ -54,18 +89,19 @@ abstract class BeaconScheduler {
 }
 
 void _flushEffects() {
-  // final len = effectQueue.length;
-  // var i = 0;
-  // while (i < len) {
-  //   effectQueue[i].updateIfNecessary();
-  //   i++;
-  // }
-  // effectQueue.clear();
-
-  // the above code (and for loop) results in concurrent modification error
-  // and/or partial flushes
-  while (_effectQueue.isNotEmpty) {
-    _effectQueue.removeFirst().updateIfNecessary();
+  while (_queueHead != null) {
+    final consumer = _queueHead!;
+    final next = consumer._nextQueued;
+    _queueHead = next;
+    if (next == null) {
+      _queueTail = null;
+    } else {
+      next._prevQueued = null;
+    }
+    consumer._prevQueued = null;
+    consumer._nextQueued = null;
+    consumer._inQueue = false;
+    consumer.updateIfNecessary();
   }
 }
 
@@ -77,7 +113,7 @@ void _asyncScheduler() {
         _flushEffects();
       } finally {
         _flushing = false;
-        if (_effectQueue.isNotEmpty) {
+        if (_queueHead != null) {
           _flushFn();
         }
       }
@@ -97,7 +133,7 @@ void Function() _customFPS(int fps) {
         _flushEffects();
       } finally {
         _flushing = false;
-        if (_effectQueue.isNotEmpty) {
+        if (_queueHead != null) {
           _flushFn();
         }
       }
@@ -113,7 +149,7 @@ void _sixtyfpsScheduler() {
       _flushEffects();
     } finally {
       _flushing = false;
-      if (_effectQueue.isNotEmpty) {
+      if (_queueHead != null) {
         _flushFn();
       }
     }

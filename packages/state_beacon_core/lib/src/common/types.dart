@@ -6,6 +6,9 @@ typedef VoidCallback = void Function();
 /// The status of a consumer.
 typedef Status = int;
 
+/// The consumer failed on its previous evaluation and must recompute.
+const ERROR = -1;
+
 /// The consumer is clean.
 const CLEAN = 0;
 
@@ -14,3 +17,6 @@ const CHECK = 1;
 
 /// The consumer is dirty.
 const DIRTY = 2;
+
+/// The consumer has been disposed.
+const DISPOSED = 3;

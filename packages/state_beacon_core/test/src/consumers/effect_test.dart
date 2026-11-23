@@ -355,23 +355,21 @@ void main() {
     expect(called, 2);
   });
 
-  // disabled for performance reasons. This is a rare case and it's not worth
-  // the performance hit.
-  // test('should create single dependency if accessed multiple times', () {
-  //   final a = Beacon.writable(1);
-  //   var ran = 0;
+  test('should create single dependency if accessed multiple times', () {
+    final a = Beacon.writable(1);
+    var ran = 0;
 
-  //   Beacon.effect(() {
-  //     ran++;
-  //     a.value;
-  //     a.value;
-  //   });
+    Beacon.effect(() {
+      ran++;
+      a.value;
+      a.value;
+    });
 
-  //   expect(ran, 0);
-  //   BeaconScheduler.flush();
-  //   expect(ran, 1);
-  //   expect(a.listenersCount, 1);
-  // });
+    expect(ran, 0);
+    BeaconScheduler.flush();
+    expect(ran, 1);
+    expect(a.listenersCount, 1);
+  });
 
   test('should call clean up function when re-executing/disposed', () {
     final a = Beacon.writable(1);
@@ -556,6 +554,51 @@ void main() {
     a.value = 2;
     BeaconScheduler.flush();
     expect(runs, 1);
+  });
+
+  test('should safely dequeue effects disposed from head, middle, and tail',
+      () {
+    final a = Beacon.writable(0);
+    final log = <String>[];
+
+    final d1 = Beacon.effect(() {
+      a.value;
+      log.add('e1:${a.value}');
+    });
+    final d2 = Beacon.effect(() {
+      a.value;
+      log.add('e2:${a.value}');
+    });
+    final d3 = Beacon.effect(() {
+      a.value;
+      log.add('e3:${a.value}');
+    });
+    final d4 = Beacon.effect(() {
+      a.value;
+      log.add('e4:${a.value}');
+    });
+
+    // Dispose middle effect while all four are queued.
+    d2();
+    BeaconScheduler.flush();
+    expect(log, ['e1:0', 'e3:0', 'e4:0']);
+    log.clear();
+
+    // Queue e1, e3, e4 again, then dispose head (e1) and tail (e4) before
+    // flush.
+    a.value = 1;
+    d1();
+    d4();
+    BeaconScheduler.flush();
+    expect(log, ['e3:1']);
+    log.clear();
+
+    // Remaining effect still receives future updates cleanly.
+    a.value = 2;
+    BeaconScheduler.flush();
+    expect(log, ['e3:2']);
+
+    d3();
   });
 }
 

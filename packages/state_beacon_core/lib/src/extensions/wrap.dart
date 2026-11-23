@@ -38,7 +38,7 @@ extension WritableWrap<T, U> on BeaconWrapper<T, U> {
     bool disposeTogether = false,
     bool startNow = true,
   }) {
-    if (_wrapped.containsKey(target)) return;
+    if (_wrapped?.containsKey(target) ?? false) return;
 
     if (then == null && T != V) {
       throw WrapTargetWrongTypeException(name, target.name);
@@ -54,7 +54,8 @@ extension WritableWrap<T, U> on BeaconWrapper<T, U> {
       startNow: startNow,
     );
 
-    _wrapped[target] = unsub;
+    (_wrapped ??= Map<ReadableBeacon<dynamic>, VoidCallback>.identity())[target] =
+        unsub;
 
     if (disposeTogether) {
       var isDisposing = false;
@@ -107,7 +108,7 @@ extension WritableWrap<T, U> on BeaconWrapper<T, U> {
     final rmParentDispose = onDispose(internalBeacon.dispose);
 
     internalBeacon.onDispose(() {
-      _wrapped.remove(internalBeacon);
+      _wrapped?.remove(internalBeacon);
       rmParentDispose();
       // don't dispose parent beacon because
       // internal is disposed when the stream ends
