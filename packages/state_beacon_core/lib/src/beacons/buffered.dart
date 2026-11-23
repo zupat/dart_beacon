@@ -63,12 +63,14 @@ class BufferedCountBeacon<T> extends BufferedBaseBeacon<T> {
   /// @macro [BufferedCountBeacon]
   BufferedCountBeacon({required this.countThreshold, super.name}) : super();
 
-  @override
-  String get _defaultName => 'BufferedCountBeacon<$T>';
-
   /// The number of values that will be
   /// added to the buffer before it is emitted.
   final int countThreshold;
+
+  @override
+  String get _defaultName => _isExactType<BufferedCountBeacon<T>>()
+      ? 'BufferedCountBeacon<$T>'
+      : super._defaultName;
 
   @override
   void add(T newValue) {
@@ -87,13 +89,15 @@ class BufferedTimeBeacon<T> extends BufferedBaseBeacon<T> {
   /// @macro [BufferedTimeBeacon]
   BufferedTimeBeacon({required this.duration, super.name}) : super();
 
-  @override
-  String get _defaultName => 'BufferedTimeBeacon<$T>';
-
   /// The duration to wait before emitting the buffer.
   final Duration duration;
 
   Timer? _timer;
+
+  @override
+  String get _defaultName => _isExactType<BufferedTimeBeacon<T>>()
+      ? 'BufferedTimeBeacon<$T>'
+      : super._defaultName;
 
   @override
   void add(T newValue) {

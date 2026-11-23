@@ -16,11 +16,13 @@ class PeriodicBeacon<T> extends ReadableBeacon<T> {
   final Duration _period;
   final T Function(int count) _compute;
 
-  @override
-  String get _defaultName => 'PeriodicBeacon<$T>';
-
   StreamSubscription<dynamic>? _subscription;
   var _count = 0;
+
+  @override
+  String get _defaultName => _isExactType<PeriodicBeacon<T>>()
+      ? 'PeriodicBeacon<$T>'
+      : super._defaultName;
 
   void _start() {
     _subscription = Stream<dynamic>.periodic(_period).listen((_) {

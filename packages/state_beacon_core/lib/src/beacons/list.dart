@@ -11,7 +11,8 @@ class ListBeacon<E> extends WritableBeacon<List<E>> {
   }) : super(initialValue: initialValue);
 
   @override
-  String get _defaultName => 'ListBeacon<$E>';
+  String get _defaultName =>
+      _isExactType<ListBeacon<E>>() ? 'ListBeacon<$E>' : super._defaultName;
 
   /// Set the first element of the list.
   ///

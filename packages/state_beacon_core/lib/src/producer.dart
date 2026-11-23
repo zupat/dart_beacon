@@ -36,7 +36,6 @@ import 'dart:math';
 
 import 'package:basic_interfaces/basic_interfaces.dart';
 import 'package:state_beacon_core/src/common/exceptions.dart';
-import 'package:state_beacon_core/src/creator/creator.dart';
 
 import 'common/async_value.dart';
 import 'common/types.dart';
@@ -68,12 +67,26 @@ part 'consumers/effect.dart';
 part 'consumers/subscription.dart';
 part 'consumers/derived_subscription.dart';
 part 'consumers/sync_subscription.dart';
+part 'creator/beacon_creator.dart';
+part 'creator/beacon_group_creator.dart';
 part 'extensions/chain.dart';
 part 'extensions/wrap.dart';
 part 'mixins/beacon_wrapper.dart';
 part 'mixins/autosleep.dart';
 part 'scheduler.dart';
 part 'untracked.dart';
+
+/// Global beacon creator
+// ignore: constant_identifier_names
+const Beacon = _BeaconCreator();
+
+// Default name provenance for lazy default name resolution:
+// 0 = direct constructor (use runtimeType),
+// 1 = created via Beacon.* creator,
+// 2 = created via Beacon.lazy* creator.
+const _defaultNameFromType = 0;
+const _defaultNameFromCreator = 1;
+const _defaultNameFromLazyCreator = 2;
 
 /// The current consumer.
 Consumer? currentConsumer;
@@ -98,15 +111,21 @@ final _emptyObservers = <Consumer>[];
 /// The base class for all beacons.
 abstract class Producer<T> implements Disposable {
   /// Creates a new [Producer].
-  Producer({T? initialValue, String? name}) : _name = name {
+  Producer({T? initialValue, String? name})
+      : this._(initialValue: initialValue, name: name);
+
+  Producer._({
+    T? initialValue,
+    String? name,
+    int defaultNameMode = _defaultNameFromType,
+  })  : _name = name,
+        _defaultNameMode = defaultNameMode {
     // we don't want to set an initial value for derived, even
     // if the type is nullable.
     if (initialValue != null || (!_isDerived && _isNullable)) {
       _initialValue = initialValue as T;
       _value = initialValue;
       _isEmpty = false;
-    } else {
-      _wasLazy = true;
     }
   }
 
@@ -137,7 +156,7 @@ abstract class Producer<T> implements Disposable {
   bool get _isNullable => null is T;
 
   var _isEmpty = true;
-  var _wasLazy = false;
+  final int _defaultNameMode;
 
   /// Returns true if the beacon has not been initialized.
   bool get isEmpty => _isEmpty;
@@ -146,6 +165,8 @@ abstract class Producer<T> implements Disposable {
 
   /// The name of the beacon. For debugging purposes.
   String get name => _name ??= _defaultName;
+
+  bool _isExactType<X>() => runtimeType == X;
 
   String get _defaultName => runtimeType.toString();
 

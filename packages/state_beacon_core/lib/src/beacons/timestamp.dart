@@ -6,16 +6,25 @@ typedef TimestampValue<T> = ({T value, DateTime timestamp});
 /// A beacon that attaches a timestamp to its value.
 class TimestampBeacon<T> extends ReadableBeacon<TimestampValue<T>> {
   /// @macro [TimestampBeacon]
-  TimestampBeacon({T? initialValue, super.name})
-      : super(
+  TimestampBeacon({T? initialValue, String? name})
+      : this._(initialValue: initialValue, name: name);
+
+  TimestampBeacon._({
+    T? initialValue,
+    super.name,
+    super.defaultNameMode,
+  }) : super._(
           initialValue: initialValue != null || null is T
               ? (value: initialValue as T, timestamp: DateTime.now())
               : null,
         );
 
   @override
-  String get _defaultName =>
-      _wasLazy ? 'LazyTimestampBeacon<$T>' : 'TimestampBeacon<$T>';
+  String get _defaultName => _isExactType<TimestampBeacon<T>>()
+      ? (_defaultNameMode == _defaultNameFromLazyCreator
+          ? 'LazyTimestampBeacon<$T>'
+          : 'TimestampBeacon<$T>')
+      : super._defaultName;
 
   /// Set the value of this beacon.
   void set(T newValue) {

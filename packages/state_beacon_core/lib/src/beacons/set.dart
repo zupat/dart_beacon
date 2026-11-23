@@ -9,7 +9,8 @@ class SetBeacon<E> extends WritableBeacon<Set<E>> {
   }) : super(initialValue: initialValue);
 
   @override
-  String get _defaultName => 'SetBeacon<$E>';
+  String get _defaultName =>
+      _isExactType<SetBeacon<E>>() ? 'SetBeacon<$E>' : super._defaultName;
 
   /// Adds [value] to the set.
   ///

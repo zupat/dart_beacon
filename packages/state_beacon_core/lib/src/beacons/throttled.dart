@@ -25,18 +25,27 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
   /// @macro [ThrottledBeacon]
   ThrottledBeacon({
     Duration? duration,
+    T? initialValue,
+    bool dropBlocked = true,
+    String? name,
+  }) : this._(
+          duration: duration,
+          initialValue: initialValue,
+          dropBlocked: dropBlocked,
+          name: name,
+        );
+
+  ThrottledBeacon._({
+    Duration? duration,
     super.initialValue,
     this.dropBlocked = true,
     super.name,
-  }) {
+    super.defaultNameMode,
+  }) : super._() {
     _duration = duration;
   }
 
   Timer? _timer;
-
-  @override
-  String get _defaultName =>
-      _wasLazy ? 'LazyThrottledBeacon<$T>' : 'ThrottledBeacon<$T>';
 
   /// If true, values will be dropped while the beacon is blocked.
   /// If false, values will be buffered and
@@ -44,6 +53,13 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
   final bool dropBlocked;
 
   final List<(T, bool)> _buffer = [];
+
+  @override
+  String get _defaultName => _isExactType<ThrottledBeacon<T>>()
+      ? (_defaultNameMode == _defaultNameFromLazyCreator
+          ? 'LazyThrottledBeacon<$T>'
+          : 'ThrottledBeacon<$T>')
+      : super._defaultName;
 
   void _processBuffer(Timer timer) {
     if (_buffer.isEmpty) {

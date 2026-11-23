@@ -3,18 +3,29 @@ part of '../producer.dart';
 /// An immutable beacon.
 class ReadableBeacon<T> extends Producer<T> {
   /// @macro [ReadableBeacon]
-  ReadableBeacon({super.initialValue, super.name}) {
+  ReadableBeacon({T? initialValue, String? name})
+      : this._(initialValue: initialValue, name: name);
+
+  ReadableBeacon._({
+    super.initialValue,
+    super.name,
+    super.defaultNameMode,
+  }) : super._() {
     assert(() {
       BeaconObserver.instance?.onCreate(this, _isEmpty);
       return true;
     }());
   }
 
-  @override
-  String get _defaultName => 'Readable<$T>';
-
   StreamController<T>? _controller;
   VoidCallback? _unsubFromSelf;
+
+  @override
+  String get _defaultName => _isExactType<ReadableBeacon<T>>()
+      ? (_defaultNameMode == _defaultNameFromCreator
+          ? 'Readable<$T>'
+          : 'ReadableBeacon<$T>')
+      : super._defaultName;
 
   /// Returns a broadcast [Stream] that emits the current value
   /// and all subsequent updates to the value of this beacon.

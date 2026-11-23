@@ -65,7 +65,9 @@ class ProgressBeacon<T> extends ReadableBeacon<T> {
   }
 
   @override
-  String get _defaultName => 'ProgressBeacon<$T>';
+  String get _defaultName => _isExactType<ProgressBeacon<T>>()
+      ? 'ProgressBeacon<$T>'
+      : super._defaultName;
 
   /// The current status of the beacon.
   late final status = Beacon.writable(

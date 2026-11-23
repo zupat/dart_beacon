@@ -1,6 +1,6 @@
 // ignore_for_file: lines_longer_than_80_chars
 
-part of 'creator.dart';
+part of '../producer.dart';
 
 /// The class with all the methods for creating beacons.
 class _BeaconCreator {
@@ -18,9 +18,10 @@ class _BeaconCreator {
     T initialValue, {
     String? name,
   }) =>
-      WritableBeacon<T>(
+      WritableBeacon<T>._(
         initialValue: initialValue,
         name: name,
+        defaultNameMode: _defaultNameFromCreator,
       );
 
   /// Like `Beacon.writable` but behaves like a late variable.
@@ -31,9 +32,10 @@ class _BeaconCreator {
     T? initialValue,
     String? name,
   }) =>
-      WritableBeacon<T>(
+      WritableBeacon<T>._(
         initialValue: initialValue,
         name: name,
+        defaultNameMode: _defaultNameFromLazyCreator,
       );
 
   /// Creates an immutable `ReadableBeacon` from a value.
@@ -54,9 +56,10 @@ class _BeaconCreator {
     T initialValue, {
     String? name,
   }) =>
-      ReadableBeacon<T>(
+      ReadableBeacon<T>._(
         initialValue: initialValue,
         name: name,
+        defaultNameMode: _defaultNameFromCreator,
       );
 
   /// Creates a `DebouncedBeacon` that will delay updates to its value based on
@@ -102,11 +105,12 @@ class _BeaconCreator {
     bool allowFirst = false,
     String? name,
   }) =>
-      DebouncedBeacon<T>(
+      DebouncedBeacon<T>._(
         initialValue: initialValue,
         duration: duration,
         allowFirst: allowFirst,
         name: name,
+        defaultNameMode: _defaultNameFromLazyCreator,
       );
 
   /// Creates a `ThrottledBeacon` that will limit the rate of updates to
@@ -155,11 +159,12 @@ class _BeaconCreator {
     bool dropBlocked = true,
     String? name,
   }) =>
-      ThrottledBeacon<T>(
+      ThrottledBeacon<T>._(
         initialValue: initialValue,
         duration: duration,
         dropBlocked: dropBlocked,
         name: name,
+        defaultNameMode: _defaultNameFromLazyCreator,
       );
 
   /// Creates a `FilteredBeacon` that will only updates its value if it passes the filter criteria.
@@ -204,11 +209,12 @@ class _BeaconCreator {
     bool allowFirst = false,
     String? name,
   }) {
-    return FilteredBeacon<T>(
+    return FilteredBeacon<T>._(
       initialValue: initialValue,
       filter: filter,
       allowFirst: allowFirst,
       name: name,
+      defaultNameMode: _defaultNameFromLazyCreator,
     );
   }
 
@@ -298,10 +304,11 @@ class _BeaconCreator {
     int historyLimit = 10,
     String? name,
   }) {
-    return UndoRedoBeacon<T>(
+    return UndoRedoBeacon<T>._(
       initialValue: initialValue,
       historyLimit: historyLimit,
       name: name,
+      defaultNameMode: _defaultNameFromLazyCreator,
     );
   }
 
@@ -326,9 +333,10 @@ class _BeaconCreator {
     T? initialValue,
     String? name,
   }) =>
-      TimestampBeacon<T>(
+      TimestampBeacon<T>._(
         initialValue: initialValue,
         name: name,
+        defaultNameMode: _defaultNameFromLazyCreator,
       );
 
   /// Creates a `StreamBeacon` from a given stream.

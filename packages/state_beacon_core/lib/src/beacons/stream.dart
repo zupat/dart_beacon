@@ -12,7 +12,9 @@ class StreamBeacon<T> extends AsyncBeacon<T> {
   });
 
   @override
-  String get _defaultName => 'StreamBeacon<$T>';
+  String get _defaultName => _isExactType<StreamBeacon<T>>()
+      ? 'StreamBeacon<$T>'
+      : super._defaultName;
 
   /// unsubscribes from the internal stream
   void unsubscribe() {
