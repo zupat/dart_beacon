@@ -28,6 +28,7 @@ abstract class AsyncBeacon<T> extends ReadableBeacon<AsyncValue<T>>
   T? get _rawLastData => _value.lastData;
 
   void _setLoadingWithLastData() {
+    if (_value.isLoading) return;
     _setValue(AsyncLoading()..setLastData(_rawLastData));
   }
 

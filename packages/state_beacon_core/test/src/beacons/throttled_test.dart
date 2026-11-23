@@ -295,4 +295,38 @@ void main() {
 
     beacon.dispose();
   });
+
+  test('should drain queued updates in FIFO order and clear queue on reset',
+      () async {
+    final beacon = Beacon.throttled(
+      0,
+      duration: k1ms * 5,
+      dropBlocked: false,
+    );
+    final seen = <int>[];
+    beacon.subscribeSynchronously(seen.add, startNow: false);
+
+    for (var i = 1; i <= 6; i++) {
+      beacon.set(i);
+    }
+
+    expect(seen, [1]);
+
+    await delay(k1ms * 45);
+    expect(seen, [1, 2, 3, 4, 5, 6]);
+    expect(beacon.isBlocked, isFalse);
+
+    seen.clear();
+    beacon
+      ..set(10)
+      ..set(11)
+      ..set(12)
+      ..reset();
+
+    await delay(k1ms * 20);
+    expect(seen, [10, 0]);
+    expect(beacon.isBlocked, isFalse);
+
+    beacon.dispose();
+  });
 }

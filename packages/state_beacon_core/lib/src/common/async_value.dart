@@ -150,7 +150,7 @@ class AsyncData<T> extends AsyncValue<T> {
       other is AsyncData<T> && other.value == value;
 
   @override
-  int get hashCode => toString().hashCode ^ value.hashCode;
+  int get hashCode => Object.hash(AsyncData, value);
 }
 
 /// A class that represents an error that occurred while loading a value.
@@ -178,8 +178,7 @@ class AsyncError<T> extends AsyncValue<T> {
       other.stackTrace == stackTrace;
 
   @override
-  int get hashCode =>
-      toString().hashCode ^ error.hashCode ^ stackTrace.hashCode;
+  int get hashCode => Object.hash(AsyncError, error, stackTrace);
 }
 
 /// A class that represents a value that is being loaded asynchronously.
@@ -188,7 +187,7 @@ class AsyncLoading<T> extends AsyncValue<T> {
   bool operator ==(Object other) => other is AsyncLoading<T>;
 
   @override
-  int get hashCode => toString().hashCode;
+  int get hashCode => (AsyncLoading).hashCode;
 
   @override
   bool get isIdleOrLoading => true;
@@ -209,5 +208,5 @@ class AsyncIdle<T> extends AsyncValue<T> {
   bool get isIdleOrLoading => true;
 
   @override
-  int get hashCode => toString().hashCode;
+  int get hashCode => (AsyncIdle).hashCode;
 }

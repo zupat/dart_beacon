@@ -230,4 +230,55 @@ void main() {
     final resultError = await futureError;
     expect(resultError, isA<AsyncError<int>>());
   });
+
+  test('hashCode does not call toString and matches across covariant types',
+      () {
+    final obj1 = _NoToStringObject(42);
+    final obj2 = _NoToStringObject(42);
+    final data1 = AsyncData(obj1);
+    final data2 = AsyncData(obj2);
+
+    expect(data1, equals(data2));
+    expect(data1.hashCode, equals(data2.hashCode));
+    expect(obj1.toStringCalls, 0);
+    expect(obj2.toStringCalls, 0);
+
+    final stack = StackTrace.current;
+    final err1 = AsyncError<int>(obj1, stack);
+    final err2 = AsyncError<int>(obj2, stack);
+
+    expect(err1, equals(err2));
+    expect(err1.hashCode, equals(err2.hashCode));
+    expect(obj1.toStringCalls, 0);
+    expect(obj2.toStringCalls, 0);
+
+    final numData = AsyncData<num>(1);
+    final intData = AsyncData<int>(1);
+    expect(numData == intData, isTrue);
+    expect(numData.hashCode, equals(intData.hashCode));
+
+    expect(AsyncLoading<int>().hashCode, isNot(AsyncIdle<int>().hashCode));
+  });
+}
+
+class _NoToStringObject {
+  _NoToStringObject(this.id);
+
+  final int id;
+  int toStringCalls = 0;
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) =>
+      other is _NoToStringObject && other.id == id;
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() {
+    toStringCalls++;
+    return '_NoToStringObject($id)';
+  }
 }

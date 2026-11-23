@@ -52,7 +52,7 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
   /// emitted when the beacon is unblocked.
   final bool dropBlocked;
 
-  final List<(T, bool)> _buffer = [];
+  Queue<(T, bool)>? _buffer;
 
   @override
   String get _defaultName => _defaultNameMode == _defaultNameFromLazyCreator
@@ -60,13 +60,14 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
       : super._defaultName;
 
   void _processBuffer(Timer timer) {
-    if (_buffer.isEmpty) {
+    final buffer = _buffer;
+    if (buffer == null || buffer.isEmpty) {
       _timer?.cancel();
       _blocked = false;
       return;
     }
 
-    final (bufferedValue, force) = _buffer.removeAt(0);
+    final (bufferedValue, force) = buffer.removeFirst();
     _setValue(bufferedValue, force: force);
   }
 
@@ -74,7 +75,7 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
   void set(T newValue, {bool force = false}) {
     if (_blocked) {
       if (!dropBlocked) {
-        _buffer.add((newValue, force));
+        (_buffer ??= Queue<(T, bool)>()).addLast((newValue, force));
       }
       return;
     }
@@ -95,9 +96,10 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
     if (unblock) {
       _timer?.cancel();
       _timer = null;
-      if (_buffer.isNotEmpty) {
-        final pending = List<(T, bool)>.of(_buffer);
-        _buffer.clear();
+      final buffer = _buffer;
+      if (buffer != null && buffer.isNotEmpty) {
+        final pending = List<(T, bool)>.of(buffer);
+        buffer.clear();
         for (final (bufferedValue, force) in pending) {
           _setValue(bufferedValue, force: force);
         }
@@ -112,7 +114,7 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
     _timer?.cancel();
     _timer = null;
     _blocked = false;
-    _buffer.clear();
+    _buffer?.clear();
   }
 
   @override

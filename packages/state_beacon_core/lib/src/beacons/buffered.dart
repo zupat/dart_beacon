@@ -9,15 +9,28 @@ abstract class ReadableBufferedBeacon<T> extends ReadableBeacon<List<T>> {
 
   final List<T> _buffer = [];
 
-  late final _currentBuffer = ListBeacon<T>([], name: "$name's currentBuffer");
+  ListBeacon<T>? _currentBuffer;
 
   /// The current buffer of values that have been added to this beacon.
   /// This can be listened to directly.
-  ReadableBeacon<List<T>> get currentBuffer => _currentBuffer;
+  ReadableBeacon<List<T>> get currentBuffer {
+    var current = _currentBuffer;
+    if (current == null) {
+      current = ListBeacon<T>(
+        List<T>.of(_buffer),
+        name: "$name's currentBuffer",
+      );
+      if (_isDisposed) {
+        current.dispose();
+      }
+      _currentBuffer = current;
+    }
+    return current;
+  }
 
   void _clearBuffer() {
     _buffer.clear();
-    _currentBuffer.reset();
+    _currentBuffer?.reset();
   }
 
   /// Clears the buffer
@@ -35,7 +48,7 @@ abstract class BufferedBaseBeacon<T> extends ReadableBufferedBeacon<T>
 
   void _addToBuffer(T newValue) {
     _buffer.add(newValue);
-    _currentBuffer.add(newValue);
+    _currentBuffer?.add(newValue);
   }
 
   /// Adds a new value to the buffer.
@@ -46,7 +59,7 @@ abstract class BufferedBaseBeacon<T> extends ReadableBufferedBeacon<T>
     if (_isDisposed) return;
     clearWrapped();
     _clearBuffer();
-    _currentBuffer.dispose();
+    _currentBuffer?.dispose();
     super.dispose();
   }
 

@@ -179,4 +179,99 @@ void main() {
       expect(beacon.isDisposed, isTrue);
     });
   });
+
+  group('lazy currentBuffer', () {
+    test('does not allocate currentBuffer beacon until accessed', () {
+      final created = <String>[];
+      BeaconObserver.instance = _CreateRecordingObserver(created);
+      addTearDown(() => BeaconObserver.instance = null);
+
+      final beacon = Beacon.bufferedCount<int>(2, name: 'buf');
+      beacon
+        ..add(1)
+        ..add(2)
+        ..add(3)
+        ..reset()
+        ..dispose();
+
+      expect(created, equals(['buf']));
+    });
+
+    test(
+      'syncs previously buffered values on first access and disposes cleanly',
+      () {
+        final beacon = Beacon.bufferedCount<int>(4, name: 'buf');
+        beacon
+          ..add(10)
+          ..add(20);
+
+        final current = beacon.currentBuffer;
+        expect(current.value, equals([10, 20]));
+
+        final seen = <List<int>>[];
+        current.subscribe(
+          (v) => seen.add(List.of(v)),
+          startNow: false,
+        );
+
+        beacon.add(30);
+        BeaconScheduler.flush();
+        expect(
+          seen,
+          equals([
+            [10, 20, 30],
+          ]),
+        );
+
+        beacon.add(40);
+        BeaconScheduler.flush();
+        expect(beacon.value, equals([10, 20, 30, 40]));
+        expect(
+          seen,
+          equals([
+            [10, 20, 30],
+            <int>[],
+          ]),
+        );
+
+        beacon.dispose();
+        expect(current.isDisposed, isTrue);
+      },
+    );
+
+    test('returns an already-disposed currentBuffer if accessed after dispose',
+        () {
+      final beacon = Beacon.bufferedCount<int>(3, name: 'buf');
+      beacon
+        ..add(1)
+        ..dispose();
+
+      final current = beacon.currentBuffer;
+      expect(current.isDisposed, isTrue);
+      expect(current.peek(), isEmpty);
+    });
+  });
+}
+
+class _CreateRecordingObserver extends BeaconObserver {
+  _CreateRecordingObserver(this.created);
+
+  final List<String> created;
+
+  @override
+  void onCreate(ReadableBeacon<dynamic> beacon, bool isLazy) {
+    created.add(beacon.name);
+  }
+
+  @override
+  void onDispose(ReadableBeacon<dynamic> beacon) {}
+
+  @override
+  void onStopWatch(String label, BaseBeacon<dynamic> beacon) {}
+
+  @override
+  void onUpdate(ReadableBeacon<dynamic> beacon) {}
+
+  @override
+  void onWatch(String label, BaseBeacon<dynamic> beacon) {}
 }
