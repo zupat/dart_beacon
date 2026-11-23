@@ -226,4 +226,58 @@ void main() {
     expect(seen, [2]);
     unsub();
   });
+
+  test('should safely add and remove subscribers during multi-observer update',
+      () {
+    final a = Beacon.writable(0);
+    final log = <String>[];
+    void Function()? unsubRemoved;
+    void Function()? unsubAdded;
+
+    // Register a synchronous observer plus two async observers (triggering the
+    // multi-observer loop). During notification, the sync observer removes one
+    // async observer (calling _removeObserver synchronously while _notifying>0)
+    // and adds a new observer (calling _addObserver while _notifying>0).
+    final unsubFirst = a.subscribeSynchronously(
+      (v) {
+        log.add('first:$v');
+        if (v == 1) {
+          unsubRemoved?.call();
+          unsubAdded = a.subscribeSynchronously(
+            (v2) => log.add('added:$v2'),
+            startNow: false,
+          );
+        }
+      },
+      startNow: false,
+    );
+
+    unsubRemoved = a.subscribe(
+      (v) => log.add('removed:$v'),
+      startNow: false,
+    );
+
+    final unsubAsync = a.subscribe(
+      (v) => log.add('async:$v'),
+      startNow: false,
+    );
+
+    a.value = 1;
+    BeaconScheduler.flush();
+
+    // Copy-on-write preserves the snapshot for the in-flight notification,
+    // while removing `removed` and adding `added` for subsequent updates.
+    expect(log, ['first:1', 'async:1']);
+    expect(a.listenersCount, 3);
+    log.clear();
+
+    a.value = 2;
+    BeaconScheduler.flush();
+
+    expect(log, ['first:2', 'added:2', 'async:2']);
+
+    unsubFirst();
+    unsubAdded?.call();
+    unsubAsync();
+  });
 }

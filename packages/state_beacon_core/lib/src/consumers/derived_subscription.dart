@@ -1,7 +1,7 @@
 part of '../producer.dart';
 
 /// A subscription implementation specialized for [DerivedBeacon]s.
-class DerivedSubscription<T> implements Consumer {
+class DerivedSubscription<T> with _QueuedConsumer implements Consumer {
   /// Creates a new [DerivedSubscription].
   DerivedSubscription(
     this.producer,
@@ -61,19 +61,6 @@ class DerivedSubscription<T> implements Consumer {
 
   @override
   Status _status = DIRTY;
-
-  @override
-  // Assigned via Consumer interface in scheduler.dart.
-  // ignore: use_late_for_private_fields_and_variables
-  Consumer? _prevQueued;
-
-  @override
-  // Assigned via Consumer interface in scheduler.dart.
-  // ignore: use_late_for_private_fields_and_variables
-  Consumer? _nextQueued;
-
-  @override
-  bool _inQueue = false;
 
   void _schedule() {
     if (_isDisposed) return;

@@ -3,7 +3,7 @@
 part of '../producer.dart';
 
 /// A callback that runs when its [Producer] changes.
-class Subscription<T> implements Consumer {
+class Subscription<T> with _QueuedConsumer implements Consumer {
   /// Creates a new [Subscription].
   Subscription(
     this.producer,
@@ -37,19 +37,6 @@ class Subscription<T> implements Consumer {
 
   @override
   Status _status = DIRTY;
-
-  @override
-  // Assigned via Consumer interface in scheduler.dart.
-  // ignore: use_late_for_private_fields_and_variables
-  Consumer? _prevQueued;
-
-  @override
-  // Assigned via Consumer interface in scheduler.dart.
-  // ignore: use_late_for_private_fields_and_variables
-  Consumer? _nextQueued;
-
-  @override
-  bool _inQueue = false;
 
   void _schedule() {
     if (_isDisposed) return;

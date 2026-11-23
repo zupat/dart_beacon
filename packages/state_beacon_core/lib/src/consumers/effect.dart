@@ -2,7 +2,7 @@ part of '../producer.dart';
 
 /// A callback keeps track of its dependecies that
 /// re-executes whenever one changes.
-class Effect with Consumer {
+class Effect with _QueuedConsumer, Consumer {
   /// Creates a new [Effect].
   Effect(Function compute, {String? name})
       : _compute = compute as Object? Function(),

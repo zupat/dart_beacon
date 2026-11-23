@@ -33,19 +33,6 @@ class SyncSubscription<T> implements Consumer {
   Status _status = DIRTY;
 
   @override
-  // Assigned via Consumer interface in scheduler.dart.
-  // ignore: use_late_for_private_fields_and_variables
-  Consumer? _prevQueued;
-
-  @override
-  // Assigned via Consumer interface in scheduler.dart.
-  // ignore: use_late_for_private_fields_and_variables
-  Consumer? _nextQueued;
-
-  @override
-  bool _inQueue = false;
-
-  @override
   void update() {
     if (!_producer!.isEmpty) {
       fn(_producer!.peek());

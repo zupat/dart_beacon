@@ -4,6 +4,17 @@ part of 'producer.dart';
 // monomorphic _GrowableList for direct indexed loads). Never mutated directly.
 final _emptySources = <Producer<dynamic>>[];
 
+/// Mixin for [Consumer]s scheduled via the effect queue.
+/// Kept separate from [Consumer] so non-queued consumers like [DerivedBeacon]
+/// and [SyncSubscription] do not carry queue pointers.
+mixin _QueuedConsumer {
+  _QueuedConsumer? _prevQueued;
+  _QueuedConsumer? _nextQueued;
+  bool _inQueue = false;
+
+  void updateIfNecessary();
+}
+
 /// This class represents anything that can consume a [Producer].
 /// This includes [DerivedBeacon] and [Subscription] and [Effect].
 mixin Consumer {
@@ -13,11 +24,6 @@ mixin Consumer {
   /// The list of [Producer]s that this consumer is currently watching.
   List<Producer<dynamic>> sources = _emptySources;
   var _status = DIRTY;
-
-  /// Intrusive doubly-linked pointers for the effect scheduler queue.
-  Consumer? _prevQueued;
-  Consumer? _nextQueued;
-  bool _inQueue = false;
 
   /// Handles the status of the consumer when a producer changes.
   void stale(Status newStatus);

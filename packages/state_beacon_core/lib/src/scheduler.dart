@@ -1,11 +1,11 @@
 part of 'producer.dart';
 
-Consumer? _queueHead;
-Consumer? _queueTail;
+_QueuedConsumer? _queueHead;
+_QueuedConsumer? _queueTail;
 void Function() _flushFn = _asyncScheduler;
 bool _flushing = false;
 
-void _enqueueEffect(Consumer consumer) {
+void _enqueueEffect(_QueuedConsumer consumer) {
   if (consumer._inQueue) return;
   consumer._inQueue = true;
   final tail = _queueTail;
@@ -20,7 +20,7 @@ void _enqueueEffect(Consumer consumer) {
   _flushFn();
 }
 
-void _dequeueEffect(Consumer consumer) {
+void _dequeueEffect(_QueuedConsumer consumer) {
   if (!consumer._inQueue) return;
   final prev = consumer._prevQueued;
   final next = consumer._nextQueued;
