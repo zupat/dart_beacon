@@ -405,26 +405,16 @@ void main() {
 
     final s = Beacon.streamRaw(() => getStream(count.value), isLazy: true);
 
-    final buffered = s.bufferTime(k10ms * 10);
+    // Switch dependencies as soon as the first stream has emitted 0 and 1
+    // instead of assuming both land within a fixed wall-clock window. The old
+    // stream must be unsubscribed before it emits 2 and 3, so the next values
+    // must come from the new stream: 0, 1, 2, 3.
+    var seen = 0;
+    s.subscribe((_) {
+      seen++;
+      if (seen == 2) count.value = 4;
+    });
 
-    await delay(k1ms * 16); // only 0 and 1 in the first 16 ms
-
-    expect(buffered.currentBuffer(), [0, 1]);
-
-    // change dependency so it should unsub from old stream
-    // new stream should emit 0,1,2,3
-    count.value = 4;
-
-    await expectLater(
-      buffered.next(),
-      completion([
-        0,
-        1,
-        0,
-        1,
-        2,
-        3,
-      ]),
-    );
+    await expectLater(s.stream, emitsInOrder([0, 1, 0, 1, 2, 3]));
   });
 }

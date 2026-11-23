@@ -305,7 +305,10 @@ void main() {
     final beacon = Beacon.periodic(k10ms, (i) => i)
         .filter((_, n) => n.isEven)
         .map((v) => '$v')
-        .throttle(k1ms);
+        // Buffer blocked values instead of dropping them: the 1ms throttle
+        // window can be stretched by timer jitter, which would silently drop
+        // an even value and break the expected sequence.
+        .throttle(k1ms, dropBlocked: false);
 
     await expectLater(beacon.stream, emitsInOrder(['0', '2', '4']));
   });
