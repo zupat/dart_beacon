@@ -1,5 +1,7 @@
 // ignore_for_file: cascade_invocations
 
+import 'dart:async';
+
 import 'package:state_beacon_core/state_beacon_core.dart';
 import 'package:test/test.dart';
 
@@ -256,17 +258,38 @@ void main() {
 
   test('should throttle input beacon', () async {
     // BeaconObserver.instance = LoggingObserver();
-    final stream = Stream.periodic(k1ms, (i) => i).take(15);
-    final beacon =
-        stream.toRawBeacon(isLazy: true).throttle(k10ms * 1.3).buffer(2);
+    final controller = StreamController<int>();
+    final raw = controller.stream.toRawBeacon(isLazy: true);
+    final throttled = raw.throttle(k10ms);
+    final buffered = throttled.buffer(2);
 
     BeaconScheduler.flush();
 
-    final result = await beacon.next();
+    Future<void> waitFor(bool Function() condition) async {
+      while (!condition()) {
+        await delay(k1ms);
+      }
+    }
 
-    // it will have 1 val less than 10 and 1 val more than 10
-    expect(result.reduce((a, b) => a + b), inInclusiveRange(8, 20));
-    expect(beacon.currentBuffer(), isEmpty);
+    // The first value passes through and starts the throttle window.
+    controller.add(0);
+    await waitFor(() => !raw.isEmpty);
+    expect(throttled.value, 0);
+
+    // A value arriving while the throttle is blocked is dropped.
+    controller.add(1);
+    await waitFor(() => raw.value == 1);
+
+    // Once the window has elapsed, the next value passes through.
+    await waitFor(() => !throttled.isBlocked);
+    controller.add(4);
+
+    final result = await buffered.next();
+
+    expect(result, [0, 4]);
+    expect(buffered.currentBuffer(), isEmpty);
+
+    await controller.close();
   });
 
   test('should throttle input beacon and keep blocked values', () async {
