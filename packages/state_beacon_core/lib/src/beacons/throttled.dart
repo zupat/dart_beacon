@@ -114,7 +114,7 @@ class ThrottledBeacon<T> extends WritableBeacon<T>
     _timer?.cancel();
     _timer = null;
     _blocked = false;
-    _buffer?.clear();
+    _buffer = null;
   }
 
   @override
