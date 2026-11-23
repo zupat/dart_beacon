@@ -1,3 +1,9 @@
+# 3.1.5
+
+- [Perf] Faster beacon reads, writes, notifications, and effect scheduling.
+
+- [Fix] Preserve `ERROR` state when `DerivedBeacon` receives `CHECK`.
+
 # 3.1.4
 
 - [Fix] Subscriptions and effects no longer run after disposal, run cleanups untracked, and stay responsive after a throw. `next()` no longer throws on back-to-back updates.
